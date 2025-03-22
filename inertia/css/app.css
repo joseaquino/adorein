@@ -1,3 +1,20 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@source "../app";
+@source "../pages";
+@source "../../resources/views";
+
+@theme {
+    --color-primary-1: '#FDFCFF';
+    --color-primary-2: '#FAF8FE';
+    --color-primary-3: '#F4EEFD';
+    --color-primary-4: '#EDE3FB';
+    --color-primary-5: '#E5D7F7';
+    --color-primary-6: '#DAC8F0';
+    --color-primary-7: '#CBB4E8';
+    --color-primary-8: '#B99BDD';
+    --color-primary-9: '#52366F';
+    --color-primary-10: '#634781';
+    --color-primary-11: '#765996';
+    --color-primary-12: '#42265D';
+}

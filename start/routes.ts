@@ -7,10 +7,21 @@
 |
 */
 
+import {
+  handleNewOAuthUserUpdate,
+  handleOAuthCallback,
+  handleUserLogin,
+  handleUserLogout,
+  renderLogin,
+  renderNewOAuthUser,
+} from '#handlers/auth'
+import {
+  registerNewUser,
+  registerNewUserWithSocialProvider,
+  renderRegistrationForm,
+} from '#handlers/register'
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
-
-const authController = () => import('#controllers/auth_controller')
 
 router.on('/docs').renderInertia('docs')
 
@@ -20,27 +31,22 @@ router.on('/').renderInertia('home').use([middleware.auth()]).as('home')
 
 // AUTH ROUTES
 
-router.post('/auth/logout', [authController, 'destroy']).as('logout').use([middleware.auth()])
+router.post('/auth/logout', handleUserLogout).as('logout').use([middleware.auth()])
+
+router.get('/oauth/:provider/callback', handleOAuthCallback).as('oauth').use([middleware.guest()])
 
 router
-  .get('/oauth/:provider/callback', [authController, 'oauth'])
-  .as('oauth')
-  .use([middleware.guest()])
-
-router
-  .post('/auth/new-oauth-user/:providerId', [authController, 'updateNewOAuthUser'])
+  .post('/auth/new-oauth-user/:providerId', handleNewOAuthUserUpdate)
   .as('update-new-oauth-user')
 
 router
   .group(() => {
-    router.get('/login', [authController, 'index']).as('login')
-    router.post('/login', [authController, 'providers'])
-    router.get('/register', [authController, 'create']).as('register')
-    router.post('/register', [authController, 'store'])
-    router.post('/register/:provider', [authController, 'registerWithOAuthProvider'])
-    router
-      .get('/new-oauth-user/:providerId', [authController, 'viewNewOAuthUser'])
-      .as('new-oauth-user')
+    router.get('/login', renderLogin).as('login')
+    router.post('/login', handleUserLogin)
+    router.get('/register', renderRegistrationForm).as('auth.register')
+    router.post('/register', registerNewUser)
+    router.post('/register/:provider', registerNewUserWithSocialProvider)
+    router.get('/new-oauth-user/:providerId', renderNewOAuthUser).as('new-oauth-user')
   })
   .prefix('/auth')
   .use([middleware.guest()])
