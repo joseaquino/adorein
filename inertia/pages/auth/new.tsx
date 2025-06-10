@@ -23,7 +23,7 @@ const NewAccountPage = (props: NewAccountPageProps) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="bg-green-100 p-2 border border-green-600 text-green-800 rounded flex gap-4 items-center">
+      <p className="bg-green-100 p-2 border border-green-600 text-green-800 rounded-sm flex gap-4 items-center">
         <Confetti size={32} />
         Your new account was successfully created
       </p>

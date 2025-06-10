@@ -94,7 +94,7 @@ export const handleUserLogout = async ({ auth, response }: HttpContext) => {
  * @returns An HTTP response to login the user when a successful OAuth callback is received
  */
 export const handleOAuthCallback = async (ctx: HttpContext) => {
-  const { ally, params, response, auth, session } = ctx
+  const { ally, params, response, auth, session, inertia } = ctx
 
   const providers = Object.keys(ally.config) as Array<keyof SocialProviders>
   const targetProvider = providers.find((provider) => provider === params.provider)

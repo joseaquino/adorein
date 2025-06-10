@@ -12,7 +12,10 @@ interface ExistingAccount {
  * and returns them if they exist.
  * @returns The existing user and social provider if they exist
  */
-export const checkForExistingUser = async ({ session }: HttpContext): Promise<ExistingAccount> => {
+export const checkForExistingUser = async ({
+  session,
+  logger,
+}: HttpContext): Promise<ExistingAccount> => {
   const existingAccount = session.get('existingAccount', {})
 
   if (existingAccount.modalShown) {
@@ -20,6 +23,8 @@ export const checkForExistingUser = async ({ session }: HttpContext): Promise<Ex
   } else {
     session.put('existingAccount', { modalShown: true })
   }
+
+  logger.info('Checking for existing user account', existingAccount)
 
   let user: User | null = null
   let provider: UserThirdPartyAuth | null = null

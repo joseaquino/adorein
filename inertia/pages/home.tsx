@@ -8,6 +8,8 @@ const HomePage = () => {
   )
 }
 
-HomePage.layout = (page: React.ReactNode) => <DashboardLayout>{page}</DashboardLayout>
+HomePage.layout = (page: React.ReactNode) => (
+  <DashboardLayout title="Dashboard">{page}</DashboardLayout>
+)
 
 export default HomePage

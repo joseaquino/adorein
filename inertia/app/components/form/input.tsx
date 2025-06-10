@@ -24,7 +24,7 @@ export default function Input(props: InputProps) {
           onChange={onChange}
           id={name}
           data-error={!!error}
-          className="block w-full px-3 py-2 border border-indigo-800 rounded-md focus:shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white focus:bg-indigo-50 text-indigo-800 data-[error=true]:border-red-600"
+          className="block w-full px-3 py-2 border border-indigo-800 rounded-md focus:shadow-xs focus:outline-hidden focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white focus:bg-indigo-50 text-indigo-800 data-[error=true]:border-red-600"
         />
         <p className="text-red-600 text-xs">{error}</p>
       </div>

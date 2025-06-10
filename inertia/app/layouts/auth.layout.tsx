@@ -6,10 +6,10 @@ interface AuthLayoutProps {
 
 const AuthLayout = ({ children, title }: React.PropsWithChildren<AuthLayoutProps>) => {
   return (
-    <div className="bg-primary-1 h-screen grid items-center">
+    <div className="bg-primary-1 h-screen w-screen grid items-center py-6 overflow-y-scroll">
       <Head title={title} />
       <div className="max-w-md w-full m-auto flex flex-col gap-6">
-        <h1 className="text-2xl font-bold border-b pb-4 border-slate-300">{title}</h1>
+        <h1 className="text-2xl font-bold border-b pb-2 border-slate-300">{title}</h1>
         {children}
       </div>
     </div>

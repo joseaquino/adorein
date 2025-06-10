@@ -66,7 +66,7 @@ const AccountLoginForm = (props: AccountLoginFormProps) => {
         <span className="size-8 rounded-full bg-indigo-50 border border-indigo-600 flex items-center justify-center">
           <User size={24} className="text-indigo-600" />
         </span>
-        <span className="flex-grow">{email}</span>
+        <span className="grow">{email}</span>
         <button
           className="size-8 flex items-center justify-center hover:bg-slate-300 rounded-full"
           onClick={onEmailChange}

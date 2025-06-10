@@ -24,6 +24,9 @@ const inertiaConfig = defineConfig({
     enabled: true,
     entrypoint: 'inertia/app/ssr.tsx',
   },
+  history: {
+    encrypt: true,
+  },
 })
 
 export default inertiaConfig
