@@ -1,5 +1,6 @@
 import { defineConfig } from '@adonisjs/auth'
-import { sessionGuard, sessionUserProvider } from '@adonisjs/auth/session'
+import { sessionGuard } from '@adonisjs/auth/session'
+import { drizzleUserProvider } from '#guards/drizzle_user_provider'
 import type { Authenticators, InferAuthEvents } from '@adonisjs/auth/types'
 
 const authConfig = defineConfig({
@@ -7,8 +8,8 @@ const authConfig = defineConfig({
   guards: {
     web: sessionGuard({
       useRememberMeTokens: false,
-      provider: sessionUserProvider({
-        model: () => import('#models/user'),
+      provider: drizzleUserProvider({
+        uids: ['email', 'id'],
       }),
     }),
   },

@@ -1,5 +1,6 @@
-import User from '#models/user'
-import UserThirdPartyAuth from '#models/user_third_party_auth'
+import { db } from '#database/db'
+import { User } from '#database/schema/users'
+import { UserThirdPartyAuth } from '#database/schema/user_third_party_auths'
 import { HttpContext } from '@adonisjs/core/http'
 
 interface ExistingAccount {
@@ -30,11 +31,15 @@ export const checkForExistingUser = async ({
   let provider: UserThirdPartyAuth | null = null
 
   if (existingAccount.userId) {
-    user = await User.find(existingAccount.userId)
+    user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.id, existingAccount.userId),
+    })
   }
 
   if (existingAccount.providerId) {
-    provider = await UserThirdPartyAuth.find(existingAccount.providerId)
+    provider = await db.query.userThirdPartyAuths.findFirst({
+      where: (userThirdPartyAuths, { eq }) => eq(userThirdPartyAuths.id, existingAccount.providerId),
+    })
   }
 
   return {

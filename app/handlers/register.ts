@@ -1,4 +1,5 @@
-import User from '#models/user'
+import { db } from '#database/db'
+import { users } from '#database/schema/users'
 import { checkForExistingUser } from '#services/user_session_service'
 import { newAccountValidator } from '#validators/account_validator'
 import { SocialProviders } from '@adonisjs/ally/types'
@@ -34,7 +35,7 @@ export const renderRegistrationForm = async (ctx: HttpContext) => {
 export const registerNewUser = async ({ request, response, auth, session }: HttpContext) => {
   const payload = await request.validateUsing(newAccountValidator)
 
-  const user = await User.create(payload)
+  const [user] = await db.insert(users).values(payload).returning()
 
   session.flash('success', 'Your account has been created. Please login.')
 

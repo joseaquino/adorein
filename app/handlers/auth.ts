@@ -1,9 +1,11 @@
-import User from '#models/user'
-import UserThirdPartyAuth from '#models/user_third_party_auth'
+import { db } from '#database/db'
+import { userThirdPartyAuths } from '#database/schema/user_third_party_auths'
+import { users } from '#database/schema/users'
 import { newOAuthAccountValidator } from '#validators/account_validator'
 import { SocialProviders } from '@adonisjs/ally/types'
 import { HttpContext } from '@adonisjs/core/http'
 import hash from '@adonisjs/core/services/hash'
+import { eq } from 'drizzle-orm'
 
 /**
  * Handles the HTTP request for rendering the login form
@@ -29,7 +31,12 @@ export const handleUserLogin = async (ctx: HttpContext) => {
     return response.redirect().toRoute('login')
   }
 
-  const user = await User.query().where('email', email).preload('thirdPartyAuths').first()
+  const user = await db.query.users.findFirst({
+    where: (u, operators) => operators.eq(u.email, email),
+    with: {
+      thirdPartyAuths: true,
+    },
+  })
 
   if (!user) {
     session.flash('errors', { email: 'We were unable to find your account.' })
@@ -108,26 +115,49 @@ export const handleOAuthCallback = async (ctx: HttpContext) => {
 
   const providerUser = await providerInstance.user()
 
-  let userOAuth = await UserThirdPartyAuth.query()
-    .where('provider', params.provider)
-    .where('provider_id', providerUser.id)
-    .preload('user')
-    .first()
+  let userOAuth = await db.query.userThirdPartyAuths.findFirst({
+    where: (tpa, { eq, and }) =>
+      and(
+        eq(tpa.provider, params.provider),
+        eq(tpa.providerId, providerUser.id)
+      ),
+    with: {
+      user: true,
+    },
+  })
 
   if (!userOAuth) {
-    userOAuth = await UserThirdPartyAuth.create({
-      provider: params.provider,
-      providerId: providerUser.id,
-      payload: JSON.stringify(providerUser),
+    const [createdUserOAuth] = await db
+      .insert(userThirdPartyAuths)
+      .values({
+        provider: params.provider,
+        providerId: providerUser.id,
+        payload: JSON.stringify(providerUser),
+      })
+      .returning()
+    
+    userOAuth = await db.query.userThirdPartyAuths.findFirst({
+      where: (tpa, { eq }) => eq(tpa.id, createdUserOAuth.id),
+      with: {
+        user: true,
+      },
     })
+    
+    if (!userOAuth) {
+      return response.redirect().toRoute('register')
+    }
   } else {
-    userOAuth.merge({ payload: JSON.stringify(providerUser) })
-    await userOAuth.save()
+    await db
+      .update(userThirdPartyAuths)
+      .set({ payload: JSON.stringify(providerUser) })
+      .where(eq(userThirdPartyAuths.id, userOAuth.id))
   }
 
   if (!userOAuth.user) {
     const newAccountData = session.pull('isNewAccount', false)
-    const existingUser = await User.findBy('email', providerUser.email)
+    const existingUser = await db.query.users.findFirst({
+      where: (u, { eq }) => eq(u.email, providerUser.email),
+    })
 
     // If the user is registering with an OAuth provider that has not been used before but the email is already in use
     // we redirect the user to the registration form to see if they would like to link the accounts
@@ -140,13 +170,23 @@ export const handleOAuthCallback = async (ctx: HttpContext) => {
     }
 
     const [firstName, lastName] = providerUser.name.split(' ')
-    const newUser = await User.create({
-      email: providerUser.email,
-      firstName,
-      lastName,
-    })
-    await userOAuth.related('user').associate(newUser)
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        email: providerUser.email,
+        firstName,
+        lastName,
+      })
+      .returning()
+    await db
+      .update(userThirdPartyAuths)
+      .set({ userId: newUser.id })
+      .where(eq(userThirdPartyAuths.id, userOAuth.id))
     return response.redirect().toRoute('new-oauth-user', { providerId: userOAuth.id })
+  }
+
+  if (!userOAuth.user) {
+    return response.redirect().toRoute('register')
   }
 
   await auth.use('web').login(userOAuth.user)
@@ -162,10 +202,12 @@ export const handleOAuthCallback = async (ctx: HttpContext) => {
 export const renderNewOAuthUser = async (ctx: HttpContext) => {
   const { inertia, params, response } = ctx
 
-  const userOAuth = await UserThirdPartyAuth.query()
-    .where('id', params.providerId)
-    .preload('user')
-    .first()
+  const userOAuth = await db.query.userThirdPartyAuths.findFirst({
+    where: (tpa, { eq }) => eq(tpa.id, params.providerId),
+    with: {
+      user: true,
+    },
+  })
 
   if (!userOAuth || !userOAuth.user) {
     return response.redirect().toRoute('register')
@@ -188,10 +230,12 @@ export const renderNewOAuthUser = async (ctx: HttpContext) => {
 export const handleNewOAuthUserUpdate = async (ctx: HttpContext) => {
   const { params, request, response, auth } = ctx
 
-  const userOAuth = await UserThirdPartyAuth.query()
-    .where('id', params.providerId)
-    .preload('user')
-    .first()
+  const userOAuth = await db.query.userThirdPartyAuths.findFirst({
+    where: (tpa, { eq }) => eq(tpa.id, params.providerId),
+    with: {
+      user: true,
+    },
+  })
 
   if (!userOAuth || !userOAuth.user) {
     return response.redirect().toRoute('register')
@@ -200,7 +244,7 @@ export const handleNewOAuthUserUpdate = async (ctx: HttpContext) => {
   const userData = await request.validateUsing(newOAuthAccountValidator, {
     meta: { userId: userOAuth.user.id },
   })
-  await userOAuth.user.merge(userData).save()
+  await db.update(users).set(userData).where(eq(users.id, userOAuth.user.id))
 
   await auth.use('web').login(userOAuth.user)
 
