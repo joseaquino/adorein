@@ -32,7 +32,8 @@
     "#tests/*": "./tests/*.js",
     "#start/*": "./start/*.js",
     "#config/*": "./config/*.js",
-    "#handlers/*": "./app/handlers/*.js"
+    "#handlers/*": "./app/handlers/*.js",
+    "#actions/*": "./app/actions/*.js"
   },
   "devDependencies": {
     "@adonisjs/assembler": "^7.8.2",
@@ -60,6 +61,7 @@
     "vite": "^6.2.2"
   },
   "dependencies": {
+    "@adocasts.com/actions": "^1.0.5",
     "@adonisjs/ally": "^5.0.2",
     "@adonisjs/auth": "^9.2.3",
     "@adonisjs/core": "^6.14.1",

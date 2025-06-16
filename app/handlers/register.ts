@@ -1,8 +1,9 @@
-import { db } from '#database/db'
-import { users } from '#database/schema/users'
+import RegisterUser from '#actions/auth/register_user'
+import RegisterUserWithSocialProvider from '#actions/auth/register_user_with_social_provider'
 import { checkForExistingUser } from '#services/user_session_service'
 import { newAccountValidator } from '#validators/account_validator'
 import { SocialProviders } from '@adonisjs/ally/types'
+import app from '@adonisjs/core/services/app'
 import { HttpContext } from '@adonisjs/core/http'
 
 /**
@@ -32,16 +33,18 @@ export const renderRegistrationForm = async (ctx: HttpContext) => {
  * @param ctx - The HTTP context for the user creation action
  * @returns A promise that resolves when the user has been created
  */
-export const registerNewUser = async ({ request, response, auth, session }: HttpContext) => {
-  const payload = await request.validateUsing(newAccountValidator)
+export const registerNewUser = async (ctx: HttpContext) => {
+  const { request, response, session } = ctx
+  const data = await request.validateUsing(newAccountValidator)
 
-  const [user] = await db.insert(users).values(payload).returning()
-
-  session.flash('success', 'Your account has been created. Please login.')
-
-  await auth.use('web').login(user)
-
-  return response.redirect().toRoute('home')
+  try {
+    const registerAction = await app.container.make(RegisterUser)
+    await registerAction.handle({ data })
+    return response.redirect().toRoute('home')
+  } catch (error) {
+    session.flash('error', error.message || 'An unexpected error occurred.')
+    return response.redirect().back()
+  }
 }
 
 /**
@@ -50,21 +53,16 @@ export const registerNewUser = async ({ request, response, auth, session }: Http
  * @returns A promise that resolves when the user has been created
  */
 export const registerNewUserWithSocialProvider = async (ctx: HttpContext) => {
-  const { ally, session, response, params, inertia } = ctx
+  const { params, inertia, session, response } = ctx
 
-  const enabledProviders = Object.keys(ally.config) as Array<keyof SocialProviders>
-  const targetProvider = enabledProviders.find((provider) => provider === params.provider)
-
-  if (!targetProvider) {
+  try {
+    const registerAction = await app.container.make(RegisterUserWithSocialProvider)
+    const redirectUrl = await registerAction.handle({
+      provider: params.provider,
+    })
+    return inertia.location(redirectUrl)
+  } catch (error) {
     session.flash('error', 'Invalid OAuth provider')
     return response.redirect().toRoute('auth.register')
   }
-
-  const providerInstance = ally.use(targetProvider)
-
-  session.put('isNewAccount', true)
-
-  const redirectUrl = await providerInstance.getRedirectUrl()
-
-  return inertia.location(redirectUrl)
 }

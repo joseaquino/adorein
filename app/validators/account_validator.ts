@@ -57,3 +57,7 @@ export const newOAuthAccountValidator = vine.compile(
     email: vine.string().trim().email().use(uniqueEmailExceptRule()),
   })
 )
+
+export const emailValidator = vine.object({
+  email: vine.string().trim().email(),
+})
