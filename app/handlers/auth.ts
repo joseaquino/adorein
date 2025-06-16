@@ -4,7 +4,6 @@ import LoginUser from '#actions/auth/login_user'
 import LogoutUser from '#actions/auth/logout_user'
 import UpdateNewOauthUser from '#actions/auth/update_new_oauth_user'
 import { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app'
 
 /**
  * Handles the HTTP request for rendering the login form
@@ -21,14 +20,13 @@ export const renderLogin = async ({ inertia }: HttpContext) => {
  * @returns And HTTP response that logs in the user on successful authentication
  */
 export const handleUserLogin = async (ctx: HttpContext) => {
-  const loginAction = await app.container.make(LoginUser)
-  const result = await loginAction.handle()
+  const result = await LoginUser.handle()
 
   if (result.success) {
     return ctx.response.redirect().toRoute('home')
   }
 
-  ctx.session.flash('errors', result.errors)
+  ctx.session.flash('errorsBag', result.errors)
 
   if (result.authProviders) {
     return ctx.inertia.render('auth/login', {
@@ -46,8 +44,7 @@ export const handleUserLogin = async (ctx: HttpContext) => {
  * @returns An HTTP response that redirects the user to the login page
  */
 export const handleUserLogout = async (ctx: HttpContext) => {
-  const logoutAction = await app.container.make(LogoutUser)
-  await logoutAction.handle()
+  await LogoutUser.handle()
 
   return ctx.response.redirect().toRoute('login')
 }
@@ -60,8 +57,7 @@ export const handleUserLogout = async (ctx: HttpContext) => {
  */
 export const handleOAuthCallback = async (ctx: HttpContext) => {
   try {
-    const oauthAction = await app.container.make(HandleOauthCallback)
-    const result = await oauthAction.handle()
+    const result = await HandleOauthCallback.handle()
 
     if (result.success === false && result.flash) {
       ctx.session.flash(result.flash.type, result.flash.message)
@@ -74,7 +70,7 @@ export const handleOAuthCallback = async (ctx: HttpContext) => {
     return ctx.response.redirect().toRoute(result.redirectTo)
   } catch (error) {
     ctx.session.flash('error', 'An unexpected error occurred during OAuth callback.')
-    return ctx.response.redirect().toRoute('register')
+    return ctx.response.redirect().toRoute('auth.register')
   }
 }
 
@@ -84,11 +80,10 @@ export const handleOAuthCallback = async (ctx: HttpContext) => {
  * @returns An Inertia response to render the new OAuth user update form
  */
 export const renderNewOAuthUser = async (ctx: HttpContext) => {
-  const getUserAction = await app.container.make(GetOauthUserForUpdate)
-  const result = await getUserAction.handle()
+  const result = await GetOauthUserForUpdate.handle()
 
   if (!result.success) {
-    return ctx.response.redirect().toRoute('register')
+    return ctx.response.redirect().toRoute('auth.register')
   }
 
   return ctx.inertia.render('auth/new', result.data)
@@ -100,8 +95,7 @@ export const renderNewOAuthUser = async (ctx: HttpContext) => {
  * @returns An HTTP response that logs in the user after updating their OAuth account
  */
 export const handleNewOAuthUserUpdate = async (ctx: HttpContext) => {
-  const updateAction = await app.container.make(UpdateNewOauthUser)
-  const result = await updateAction.handle()
+  const result = await UpdateNewOauthUser.handle()
 
   if (result.success) {
     return ctx.response.redirect().toRoute('home')

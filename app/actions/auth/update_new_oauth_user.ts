@@ -1,20 +1,16 @@
 import { db } from '#database/db'
 import { users } from '#database/schema/users'
 import { newOAuthAccountValidator } from '#validators/account_validator'
-import { inject } from '@adonisjs/core'
-import type { HttpContext } from '@adonisjs/core/http'
+import { HttpContext } from '@adonisjs/core/http'
 import { eq } from 'drizzle-orm'
 
 type ActionResponse =
   | { success: true; user: typeof users.$inferSelect }
   | { success: false; redirectTo: string }
 
-@inject()
 export default class UpdateNewOauthUser {
-  constructor(protected ctx: HttpContext) {}
-
-  async handle(): Promise<ActionResponse> {
-    const { params, request, auth } = this.ctx
+  static async handle(): Promise<ActionResponse> {
+    const { params, request, auth } = HttpContext.getOrFail()
 
     const userOAuth = await db.query.userThirdPartyAuths.findFirst({
       where: (thirdPartyAuth, operators) => operators.eq(thirdPartyAuth.id, params.providerId),
@@ -24,7 +20,7 @@ export default class UpdateNewOauthUser {
     })
 
     if (!userOAuth || !userOAuth.user) {
-      return { success: false, redirectTo: 'register' }
+      return { success: false, redirectTo: 'auth.register' }
     }
 
     const userData = await request.validateUsing(newOAuthAccountValidator, {

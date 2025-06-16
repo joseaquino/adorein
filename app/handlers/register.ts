@@ -3,7 +3,6 @@ import RegisterUserWithSocialProvider from '#actions/auth/register_user_with_soc
 import { checkForExistingUser } from '#services/user_session_service'
 import { newAccountValidator } from '#validators/account_validator'
 import { SocialProviders } from '@adonisjs/ally/types'
-import app from '@adonisjs/core/services/app'
 import { HttpContext } from '@adonisjs/core/http'
 
 /**
@@ -38,8 +37,7 @@ export const registerNewUser = async (ctx: HttpContext) => {
   const data = await request.validateUsing(newAccountValidator)
 
   try {
-    const registerAction = await app.container.make(RegisterUser)
-    await registerAction.handle({ data })
+    await RegisterUser.handle({ data })
     return response.redirect().toRoute('home')
   } catch (error) {
     session.flash('error', error.message || 'An unexpected error occurred.')
@@ -56,8 +54,7 @@ export const registerNewUserWithSocialProvider = async (ctx: HttpContext) => {
   const { params, inertia, session, response } = ctx
 
   try {
-    const registerAction = await app.container.make(RegisterUserWithSocialProvider)
-    const redirectUrl = await registerAction.handle({
+    const redirectUrl = await RegisterUserWithSocialProvider.handle({
       provider: params.provider,
     })
     return inertia.location(redirectUrl)

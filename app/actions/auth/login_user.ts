@@ -1,8 +1,7 @@
 import { db } from '#database/db'
 import type { users } from '#database/schema/users'
 import type { SocialProviders } from '@adonisjs/ally/types'
-import { inject } from '@adonisjs/core'
-import type { HttpContext } from '@adonisjs/core/http'
+import { HttpContext } from '@adonisjs/core/http'
 import hash from '@adonisjs/core/services/hash'
 
 type ActionResponse =
@@ -14,12 +13,9 @@ type ActionResponse =
     }
   | { success: true; user: typeof users.$inferSelect }
 
-@inject()
 export default class LoginUser {
-  constructor(protected ctx: HttpContext) {}
-
-  async handle(): Promise<ActionResponse> {
-    const { request, auth, ally } = this.ctx
+  static async handle(): Promise<ActionResponse> {
+    const { request, auth, ally } = HttpContext.getOrFail()
 
     const email = request.input('email')
     const password = request.input('password')

@@ -3,8 +3,7 @@ import { userThirdPartyAuths } from '#database/schema/user_third_party_auths'
 import { User, users } from '#database/schema/users'
 import { emailValidator } from '#validators/account_validator'
 import { SocialProviders } from '@adonisjs/ally/types'
-import { inject } from '@adonisjs/core'
-import type { HttpContext } from '@adonisjs/core/http'
+import { HttpContext } from '@adonisjs/core/http'
 import vine from '@vinejs/vine'
 import { and, eq } from 'drizzle-orm'
 
@@ -12,12 +11,9 @@ type ActionResponse =
   | { success: true; user: User; redirectTo: string; providerId?: string }
   | { success: false; redirectTo: string; flash?: { message: string; type: 'error' | 'success' } }
 
-@inject()
 export default class HandleOauthCallback {
-  constructor(protected ctx: HttpContext) {}
-
-  async handle(): Promise<ActionResponse> {
-    const { ally, params, auth, session } = this.ctx
+  static async handle(): Promise<ActionResponse> {
+    const { ally, params, auth, session } = HttpContext.getOrFail()
 
     const providers = Object.keys(ally.config) as Array<keyof SocialProviders>
     const targetProvider = providers.find((provider) => provider === params.provider)
@@ -25,7 +21,7 @@ export default class HandleOauthCallback {
     if (!targetProvider) {
       return {
         success: false,
-        redirectTo: 'register',
+        redirectTo: 'auth.register',
         flash: { type: 'error', message: `Invalid OAuth provider: ${params.provider}` },
       }
     }
@@ -35,7 +31,7 @@ export default class HandleOauthCallback {
     if (providerInstance.hasError()) {
       return {
         success: false,
-        redirectTo: 'register',
+        redirectTo: 'auth.register',
         flash: { type: 'error', message: providerInstance.getError()! },
       }
     }
@@ -47,7 +43,7 @@ export default class HandleOauthCallback {
     } catch (error) {
       return {
         success: false,
-        redirectTo: 'register',
+        redirectTo: 'auth.register',
         flash: { type: 'error', message: 'Invalid email from OAuth provider.' },
       }
     }
@@ -88,7 +84,7 @@ export default class HandleOauthCallback {
           tx.rollback()
           return {
             success: false,
-            redirectTo: 'register',
+            redirectTo: 'auth.register',
             flash: { type: 'error', message: 'Failed to create OAuth user.' },
           }
         }

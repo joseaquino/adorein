@@ -1,6 +1,5 @@
 import { db } from '#database/db'
-import { inject } from '@adonisjs/core'
-import type { HttpContext } from '@adonisjs/core/http'
+import { HttpContext } from '@adonisjs/core/http'
 
 type OAuthUserData = {
   providerId: string
@@ -12,12 +11,9 @@ type OAuthUserData = {
 
 type ActionResponse = { success: true; data: OAuthUserData } | { success: false }
 
-@inject()
 export default class GetOauthUserForUpdate {
-  constructor(protected ctx: HttpContext) {}
-
-  async handle(): Promise<ActionResponse> {
-    const { params } = this.ctx
+  static async handle(): Promise<ActionResponse> {
+    const { params } = HttpContext.getOrFail()
 
     const userOAuth = await db.query.userThirdPartyAuths.findFirst({
       where: (tpa, { eq }) => eq(tpa.id, params.providerId),
