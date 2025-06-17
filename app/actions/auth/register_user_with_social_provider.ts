@@ -5,8 +5,7 @@ type Params = {
   provider: string
 }
 
-export default class RegisterUserWithSocialProvider {
-  static async handle({ provider }: Params) {
+export async function handle({ provider }: Params) {
     const { ally, session } = HttpContext.getOrFail()
 
     const enabledProviders = Object.keys(ally.config) as Array<keyof SocialProviders>
@@ -21,5 +20,4 @@ export default class RegisterUserWithSocialProvider {
     session.put('isNewAccount', true)
 
     return providerInstance.getRedirectUrl()
-  }
 }

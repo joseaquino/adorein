@@ -11,8 +11,7 @@ type ActionResponse =
   | { success: true; user: User; redirectTo: string; providerId?: string }
   | { success: false; redirectTo: string; flash?: { message: string; type: 'error' | 'success' } }
 
-export default class HandleOauthCallback {
-  static async handle(): Promise<ActionResponse> {
+export async function handle(): Promise<ActionResponse> {
     const { ally, params, auth, session } = HttpContext.getOrFail()
 
     const providers = Object.keys(ally.config) as Array<keyof SocialProviders>
@@ -134,5 +133,4 @@ export default class HandleOauthCallback {
         providerId: currentOAuth.id,
       }
     })
-  }
 }

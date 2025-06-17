@@ -11,8 +11,7 @@ type OAuthUserData = {
 
 type ActionResponse = { success: true; data: OAuthUserData } | { success: false }
 
-export default class GetOauthUserForUpdate {
-  static async handle(): Promise<ActionResponse> {
+export async function handle(): Promise<ActionResponse> {
     const { params } = HttpContext.getOrFail()
 
     const userOAuth = await db.query.userThirdPartyAuths.findFirst({
@@ -36,5 +35,4 @@ export default class GetOauthUserForUpdate {
         lastName: userOAuth.user.lastName,
       },
     }
-  }
 }

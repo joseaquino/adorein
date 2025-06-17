@@ -8,20 +8,18 @@ type Params = {
   data: Infer<typeof newAccountValidator>
 }
 
-export default class RegisterUser {
-  static async handle({ data }: Params) {
-    const { auth, session } = HttpContext.getOrFail()
-    try {
-      const [user] = await db.insert(users).values(data).returning()
+export async function handle({ data }: Params) {
+  const { auth, session } = HttpContext.getOrFail()
+  try {
+    const [user] = await db.insert(users).values(data).returning()
 
-      session.flash('success', 'Your account has been created successfully.')
+    session.flash('success', 'Your account has been created successfully.')
 
-      await auth.use('web').login(user)
+    await auth.use('web').login(user)
 
-      return user
-    } catch (error) {
-      // Log the error
-      throw new Error('Could not create account.')
-    }
+    return user
+  } catch (error) {
+    // Log the error
+    throw new Error('Could not create account.')
   }
 }

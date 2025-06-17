@@ -1,8 +1,8 @@
-import GetOauthUserForUpdate from '#actions/auth/get_oauth_user_for_update'
-import HandleOauthCallback from '#actions/auth/handle_oauth_callback'
-import LoginUser from '#actions/auth/login_user'
-import LogoutUser from '#actions/auth/logout_user'
-import UpdateNewOauthUser from '#actions/auth/update_new_oauth_user'
+import * as GetOauthUserForUpdate from '#actions/auth/get_oauth_user_for_update'
+import * as HandleOauthCallback from '#actions/auth/handle_oauth_callback'
+import * as LoginUser from '#actions/auth/login_user'
+import * as LogoutUser from '#actions/auth/logout_user'
+import * as UpdateNewOauthUser from '#actions/auth/update_new_oauth_user'
 import { HttpContext } from '@adonisjs/core/http'
 
 /**

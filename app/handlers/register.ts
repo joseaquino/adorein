@@ -1,5 +1,5 @@
-import RegisterUser from '#actions/auth/register_user'
-import RegisterUserWithSocialProvider from '#actions/auth/register_user_with_social_provider'
+import * as RegisterUser from '#actions/auth/register_user'
+import * as RegisterUserWithSocialProvider from '#actions/auth/register_user_with_social_provider'
 import { checkForExistingUser } from '#services/user_session_service'
 import { newAccountValidator } from '#validators/account_validator'
 import { SocialProviders } from '@adonisjs/ally/types'

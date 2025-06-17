@@ -8,8 +8,7 @@ type ActionResponse =
   | { success: true; user: typeof users.$inferSelect }
   | { success: false; redirectTo: string }
 
-export default class UpdateNewOauthUser {
-  static async handle(): Promise<ActionResponse> {
+export async function handle(): Promise<ActionResponse> {
     const { params, request, auth } = HttpContext.getOrFail()
 
     const userOAuth = await db.query.userThirdPartyAuths.findFirst({
@@ -33,5 +32,4 @@ export default class UpdateNewOauthUser {
     await auth.use('web').login(updatedUser)
 
     return { success: true, user: updatedUser }
-  }
 }
