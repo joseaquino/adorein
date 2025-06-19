@@ -1,5 +1,5 @@
-import { db } from '#database/db'
-import type { users } from '#database/schema/users'
+import Actions from '#actions/index'
+import type { User } from '#database/schema/users'
 import type { SocialProviders } from '@adonisjs/ally/types'
 import { HttpContext } from '@adonisjs/core/http'
 import hash from '@adonisjs/core/services/hash'
@@ -11,58 +11,58 @@ type ActionResponse =
       authProviders?: { name: string; url: string }[]
       userEmail?: string
     }
-  | { success: true; user: typeof users.$inferSelect }
+  | { success: true; user: User }
 
-export async function handle(): Promise<ActionResponse> {
-  const { request, auth, ally } = HttpContext.getOrFail()
+interface Payload {
+  email: string | undefined
+  password: string | undefined
+}
 
-  const email = request.input('email')
-  const password = request.input('password')
+export async function handle(payload: Payload): Promise<ActionResponse> {
+  const { email, password } = payload
 
-  if (!email) {
-    return { success: false, errors: { email: 'Please provide your email address.' } }
+  const { ally } = HttpContext.getOrFail()
+
+  const result = await Actions.users.getUserWithAuthProviders.handle({ email })
+
+  if (!result.success) {
+    return result
   }
 
-  const user = await db.query.users.findFirst({
-    where: (u, operators) => operators.eq(u.email, email),
-    with: {
-      thirdPartyAuths: true,
-    },
-  })
+  const { user } = result
 
-  if (!user) {
-    return { success: false, errors: { email: 'We were unable to find your account.' } }
-  }
+  const providerPromises = user.thirdPartyAuths.map(async (oauthProvider) => ({
+    name: oauthProvider.provider,
+    url: await ally.use(oauthProvider.provider as keyof SocialProviders).getRedirectUrl(),
+  }))
 
-  if (password === undefined) {
-    const providerPromises = user.thirdPartyAuths.map(async (oauthProvider) => ({
-      name: oauthProvider.provider,
-      url: await ally.use(oauthProvider.provider as keyof SocialProviders).getRedirectUrl(),
-    }))
+  const authProviders = await Promise.all(providerPromises)
 
-    const authProviders = await Promise.all(providerPromises)
-
-    if (user.password) {
-      authProviders.push({ name: 'password', url: '' })
-    }
-    return { success: false, errors: {}, userEmail: user.email, authProviders }
-  }
-
-  if (!user.password) {
+  if (user.password) {
+    authProviders.push({ name: 'password', url: '' })
+  } else {
     return { success: false, errors: { password: 'Your account is missing a password.' } }
   }
 
-  if (password === null) {
-    return { success: false, errors: { password: 'Please provide your password.' } }
+  if (!password) {
+    return {
+      success: false,
+      errors: { password: 'Please provide your password.' },
+      userEmail: user.email,
+      authProviders,
+    }
   }
 
   const isPasswordValid = await hash.verify(user.password, password)
 
   if (!isPasswordValid) {
-    return { success: false, errors: { password: 'The password you provided is incorrect.' } }
+    return {
+      success: false,
+      errors: { password: 'The password you provided is incorrect.' },
+      userEmail: user.email,
+      authProviders,
+    }
   }
-
-  await auth.use('web').login(user)
 
   return { success: true, user }
 }

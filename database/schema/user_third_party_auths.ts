@@ -1,16 +1,22 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
-import { relations } from 'drizzle-orm'
-import { randomUUID } from 'node:crypto'
 import { users } from '#database/schema/users'
+import { relations } from 'drizzle-orm'
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { randomUUID } from 'node:crypto'
 
 export const userThirdPartyAuths = sqliteTable('user_third_party_auths', {
-  id: text('id').primaryKey().$default(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .$default(() => randomUUID()),
   provider: text('provider').notNull(),
   providerId: text('provider_id').notNull(),
   payload: text('payload').notNull(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  createdAt: integer('created_at', { mode: 'timestamp' }).$default(() => new Date()).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).$default(() => new Date()).$onUpdate(() => new Date()),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .$default(() => new Date())
+    .notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .$default(() => new Date())
+    .$onUpdate(() => new Date()),
 })
 
 export const userThirdPartyAuthsRelations = relations(userThirdPartyAuths, ({ one }) => ({

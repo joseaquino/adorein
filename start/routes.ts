@@ -8,10 +8,12 @@
 */
 
 import {
+  handleAccountIdentification,
   handleNewOAuthUserUpdate,
   handleOAuthCallback,
   handleUserLogin,
   handleUserLogout,
+  renderAuthChallenge,
   renderLogin,
   renderNewOAuthUser,
 } from '#handlers/auth'
@@ -41,8 +43,10 @@ router
 
 router
   .group(() => {
-    router.get('/login', renderLogin).as('login')
+    router.get('/login', renderLogin).as('auth.login')
     router.post('/login', handleUserLogin)
+    router.post('/identify-account', handleAccountIdentification)
+    router.get('/challenge', renderAuthChallenge).as('auth.challenge')
     router.get('/register', renderRegistrationForm).as('auth.register')
     router.post('/register', registerNewUser)
     router.post('/register/:provider', registerNewUserWithSocialProvider)

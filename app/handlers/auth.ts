@@ -1,8 +1,5 @@
-import * as GetOauthUserForUpdate from '#actions/auth/get_oauth_user_for_update'
-import * as HandleOauthCallback from '#actions/auth/handle_oauth_callback'
-import * as LoginUser from '#actions/auth/login_user'
-import * as LogoutUser from '#actions/auth/logout_user'
-import * as UpdateNewOauthUser from '#actions/auth/update_new_oauth_user'
+import Actions from '#actions/index'
+import { SocialProviders } from '@adonisjs/ally/types'
 import { HttpContext } from '@adonisjs/core/http'
 
 /**
@@ -10,8 +7,65 @@ import { HttpContext } from '@adonisjs/core/http'
  * @param ctx - The HTTP request context
  * @returns An Inertia response to render the login form
  */
-export const renderLogin = async ({ inertia }: HttpContext) => {
+export const renderLogin = async ({ inertia, session }: HttpContext) => {
+  session.forget('account-identifier')
   return inertia.render('auth/login')
+}
+
+/**
+ * Handles the HTTP request for identifying an account by email
+ * @param ctx - The HTTP request context
+ * @returns An HTTP response that redirects to challenge or login page
+ */
+export const handleAccountIdentification = async (ctx: HttpContext) => {
+  const email = ctx.request.input('email')
+
+  const result = await Actions.auth.identifyAccount.handle({ email })
+
+  if (result.success) {
+    ctx.session.put('account-identifier', result.user.email)
+    return ctx.response.redirect().toRoute('auth.challenge')
+  }
+
+  ctx.session.flash('errorsBag', result.errors)
+
+  return ctx.response.redirect().toRoute('auth.login')
+}
+
+/**
+ * Renders the authentication challenge page with available auth providers
+ * @param ctx - The HTTP request context
+ * @returns An Inertia response to render the authentication challenge page
+ */
+export const renderAuthChallenge = async (ctx: HttpContext) => {
+  const email = ctx.session.get('account-identifier')
+
+  if (!email) {
+    ctx.response.redirect().toRoute('auth.login')
+  }
+
+  const result = await Actions.users.getUserWithAuthProviders.handle({ email })
+
+  if (result.success) {
+    const providerPromises = result.user.thirdPartyAuths.map(async (oauthProvider) => ({
+      name: oauthProvider.provider,
+      url: await ctx.ally.use(oauthProvider.provider as keyof SocialProviders).getRedirectUrl(),
+    }))
+
+    const authProviders = await Promise.all(providerPromises)
+
+    if (result.user.password) {
+      authProviders.push({ name: 'password', url: '' })
+    }
+    return ctx.inertia.render('auth/challenge', {
+      email,
+      authProviders,
+    })
+  }
+
+  ctx.session.flash('errorsBag', result.errors)
+
+  return ctx.response.redirect().toRoute('auth.login')
 }
 
 /**
@@ -20,22 +74,25 @@ export const renderLogin = async ({ inertia }: HttpContext) => {
  * @returns And HTTP response that logs in the user on successful authentication
  */
 export const handleUserLogin = async (ctx: HttpContext) => {
-  const result = await LoginUser.handle()
+  const inputs = ctx.request.only(['email', 'password'])
+  const result = await Actions.auth.loginUser.handle({
+    email: inputs.email,
+    password: inputs.password,
+  })
 
   if (result.success) {
+    await ctx.auth.use('web').login(result.user)
+
     return ctx.response.redirect().toRoute('home')
+  }
+
+  if (result.errors.email) {
+    return ctx.response.redirect().toRoute('login')
   }
 
   ctx.session.flash('errorsBag', result.errors)
 
-  if (result.authProviders) {
-    return ctx.inertia.render('auth/login', {
-      userEmail: result.userEmail,
-      authProviders: result.authProviders,
-    })
-  }
-
-  return ctx.response.redirect().toRoute('login')
+  return ctx.response.redirect().toRoute('auth.challenge')
 }
 
 /**
@@ -44,9 +101,9 @@ export const handleUserLogin = async (ctx: HttpContext) => {
  * @returns An HTTP response that redirects the user to the login page
  */
 export const handleUserLogout = async (ctx: HttpContext) => {
-  await LogoutUser.handle()
+  await Actions.auth.logoutUser.handle()
 
-  return ctx.response.redirect().toRoute('login')
+  return ctx.response.redirect().toRoute('auth.login')
 }
 
 /**
@@ -57,7 +114,7 @@ export const handleUserLogout = async (ctx: HttpContext) => {
  */
 export const handleOAuthCallback = async (ctx: HttpContext) => {
   try {
-    const result = await HandleOauthCallback.handle()
+    const result = await Actions.auth.handleOauthCallback.handle()
 
     if (result.success === false && result.flash) {
       ctx.session.flash(result.flash.type, result.flash.message)
@@ -80,7 +137,7 @@ export const handleOAuthCallback = async (ctx: HttpContext) => {
  * @returns An Inertia response to render the new OAuth user update form
  */
 export const renderNewOAuthUser = async (ctx: HttpContext) => {
-  const result = await GetOauthUserForUpdate.handle()
+  const result = await Actions.auth.getOauthUserForUpdate.handle()
 
   if (!result.success) {
     return ctx.response.redirect().toRoute('auth.register')
@@ -95,7 +152,7 @@ export const renderNewOAuthUser = async (ctx: HttpContext) => {
  * @returns An HTTP response that logs in the user after updating their OAuth account
  */
 export const handleNewOAuthUserUpdate = async (ctx: HttpContext) => {
-  const result = await UpdateNewOauthUser.handle()
+  const result = await Actions.auth.updateNewOauthUser.handle()
 
   if (result.success) {
     return ctx.response.redirect().toRoute('home')
