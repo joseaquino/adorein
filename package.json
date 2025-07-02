@@ -11,7 +11,10 @@
     "test": "node ace test",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "imports": {
     "#controllers/*": "./app/controllers/*.js",
@@ -44,6 +47,7 @@
     "@japa/plugin-adonisjs": "^4.0.0",
     "@japa/runner": "^4.2.0",
     "@swc/core": "1.11.31",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/luxon": "^3.4.2",
     "@types/node": "^22.7.5",
     "@types/react": "^19.0.10",
