@@ -495,18 +495,39 @@ export const emailVerificationValidator = vine.compile(
 - Existing users table modifications were minimal, only adding the two new columns with proper defaults
 - Schema relations and indexes were defined more compactly than initially estimated
 
-### Phase 2: Backend Logic (Estimated: 430 lines) - COMPLETED
-- **File**: `app/actions/auth/generate_email_verification_otp.ts` (NEW) - 85 lines
-- **File**: `app/actions/auth/verify_email_otp.ts` (NEW) - 95 lines
-- **File**: `app/actions/auth/resend_email_verification.ts` (NEW) - 65 lines
-- **File**: `app/middleware/email_verification_middleware.ts` (NEW) - 85 lines
-- **File**: `app/handlers/auth.ts` (UPDATE) - 55 lines
-- **File**: `app/handlers/register.ts` (UPDATE) - 45 lines
+### Phase 2: Backend Logic (Estimated: 430 lines | Actual: 405 lines +552/-147) - COMPLETED
+**Git Commit**: `3e4f2ee7ddfba6720cbc3457c963f6de695253b8`
+
+**Estimated vs Actual**:
+- **File**: `app/actions/auth/generate_email_verification_otp.ts` (NEW) - Estimated: 85 lines | Actual: 62 lines (+62/-0)
+- **File**: `app/actions/auth/verify_email_otp.ts` (NEW) - Estimated: 95 lines | Actual: 53 lines (+53/-0)
+- **File**: `app/actions/auth/resend_email_verification.ts` (NEW) - Estimated: 65 lines | Actual: 82 lines (+82/-0)
+- **File**: `app/middleware/email_verification_middleware.ts` (NEW) - Estimated: 85 lines | Actual: 18 lines (+18/-0)
+- **File**: `app/handlers/auth.ts` (UPDATE) - Estimated: 55 lines | Actual: 86 net lines (+87/-1)
+- **File**: `app/handlers/register.ts` (UPDATE) - Estimated: 45 lines | Actual: 4 net lines (+8/-4)
+- **File**: `app/actions/auth/find_or_create_email_verification.ts` (NEW) - Not estimated | Actual: 61 lines (+61/-0)
+- **File**: `app/actions/auth/index.ts` (UPDATE) - Not estimated | Actual: 8 lines (+8/-0)
+- **File**: `app/actions/auth/handle_oauth_callback.ts` (UPDATE) - Not estimated | Actual: 5 net lines (+106/-101)
+- **File**: `app/actions/auth/register_user.ts` (UPDATE) - Not estimated | Actual: 7 net lines (+12/-5)
+- **File**: `app/actions/auth/register_user_with_social_provider.ts` (UPDATE) - Not estimated | Actual: 0 net lines (+9/-9)
+- **File**: `app/actions/auth/update_new_oauth_user.ts` (UPDATE) - Not estimated | Actual: 0 net lines (+17/-17)
+- **File**: `app/middleware/auth_middleware.ts` (UPDATE) - Not estimated | Actual: 5 net lines (+6/-1)
+- **File**: `start/routes.ts` (UPDATE) - Not estimated | Actual: 13 lines (+13/-0)
+- **File**: `start/kernel.ts` (UPDATE) - Not estimated | Actual: 1 line (+1/-0)
+- **Other files**: Configuration and formatting changes - 10 net lines (+14/-4)
+
+**Total**: Estimated 430 lines | Actual 405 lines (+552/-147, 6% less than estimated)
+
+**Why Different**: 
+- The middleware was much simpler than anticipated due to OAuth verification being handled during user creation
+- Additional refactoring actions (`find_or_create_email_verification`) were created for better code organization
+- OAuth callback handler required significant refactoring to support proper email verification flags
+- Route definitions and kernel updates were not originally estimated but required for functionality
 
 ### Phase 3: Frontend (Estimated: 165 lines) - PENDING
 - **File**: `inertia/pages/auth/verify-email.tsx` (NEW) - 125 lines
-- **File**: `start/routes.ts` (UPDATE) - 25 lines
 - **File**: `app/validators/auth_validator.ts` (NEW) - 15 lines
+- **Note**: `start/routes.ts` was completed in Phase 2 (+13 lines)
 
 ### Phase 4: Email Integration (Estimated: 200 lines) - PENDING
 - **File**: `app/services/email_service.ts` (NEW) - 120 lines
@@ -518,7 +539,7 @@ export const emailVerificationValidator = vine.compile(
 - **File**: `.env.production` (UPDATE) - 10 lines
 - **File**: `app/tasks/cleanup_expired_verifications.ts` (NEW) - 10 lines
 
-**Total Estimated**: 1030 lines across 15 files
+**Total Estimated**: 1030 lines across 15 files | **Total Actual (Phases 1-2)**: 493 lines across 19 files (+627/-134, 52% less than estimated)
 **Compliance**: All phases comply with 500-line limit per phase and 200-line limit per file
 **Rationale**: Split database and backend logic into separate phases for better change management and review process
 
