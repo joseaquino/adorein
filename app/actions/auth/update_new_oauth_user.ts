@@ -9,27 +9,27 @@ type ActionResponse =
   | { success: false; redirectTo: string }
 
 export async function handle(): Promise<ActionResponse> {
-    const { params, request, auth } = HttpContext.getOrFail()
+  const { params, request, auth } = HttpContext.getOrFail()
 
-    const userOAuth = await db.query.userThirdPartyAuths.findFirst({
-      where: (thirdPartyAuth, operators) => operators.eq(thirdPartyAuth.id, params.providerId),
-      with: {
-        user: true,
-      },
-    })
+  const userOAuth = await db.query.userThirdPartyAuths.findFirst({
+    where: (thirdPartyAuth, operators) => operators.eq(thirdPartyAuth.id, params.providerId),
+    with: {
+      user: true,
+    },
+  })
 
-    if (!userOAuth || !userOAuth.user) {
-      return { success: false, redirectTo: 'auth.register' }
-    }
+  if (!userOAuth || !userOAuth.user) {
+    return { success: false, redirectTo: 'auth.register' }
+  }
 
-    const userData = await request.validateUsing(newOAuthAccountValidator, {
-      meta: { userId: userOAuth.user.id },
-    })
+  const userData = await request.validateUsing(newOAuthAccountValidator, {
+    meta: { userId: userOAuth.user.id },
+  })
 
-    await db.update(users).set(userData).where(eq(users.id, userOAuth.user.id))
+  await db.update(users).set(userData).where(eq(users.id, userOAuth.user.id))
 
-    const updatedUser = { ...userOAuth.user, ...userData }
-    await auth.use('web').login(updatedUser)
+  const updatedUser = { ...userOAuth.user, ...userData }
+  await auth.use('web').login(updatedUser)
 
-    return { success: true, user: updatedUser }
+  return { success: true, user: updatedUser }
 }

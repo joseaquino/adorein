@@ -9,14 +9,21 @@ type Params = {
 }
 
 export async function handle({ data }: Params) {
-  const { auth, session } = HttpContext.getOrFail()
+  const { session } = HttpContext.getOrFail()
   try {
-    const [user] = await db.insert(users).values(data).returning()
+    // Create unverified user account
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...data,
+        emailVerifiedAt: null, // Explicitly unverified
+        verificationSource: 'email',
+      })
+      .returning()
 
-    session.flash('success', 'Your account has been created successfully.')
+    session.flash('success', 'Your account has been created. Please verify your email.')
 
-    await auth.use('web').login(user)
-
+    // Do NOT login user yet - they need to verify email first
     return user
   } catch (error) {
     // Log the error

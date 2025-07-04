@@ -6,18 +6,18 @@ type Params = {
 }
 
 export async function handle({ provider }: Params) {
-    const { ally, session } = HttpContext.getOrFail()
+  const { ally, session } = HttpContext.getOrFail()
 
-    const enabledProviders = Object.keys(ally.config) as Array<keyof SocialProviders>
-    const targetProvider = enabledProviders.find((p) => p === provider)
+  const enabledProviders = Object.keys(ally.config) as Array<keyof SocialProviders>
+  const targetProvider = enabledProviders.find((p) => p === provider)
 
-    if (!targetProvider) {
-      throw new Error('Invalid OAuth provider')
-    }
+  if (!targetProvider) {
+    throw new Error('Invalid OAuth provider')
+  }
 
-    const providerInstance = ally.use(targetProvider)
+  const providerInstance = ally.use(targetProvider)
 
-    session.put('isNewAccount', true)
+  session.put('isNewAccount', true)
 
-    return providerInstance.getRedirectUrl()
+  return providerInstance.getRedirectUrl()
 }

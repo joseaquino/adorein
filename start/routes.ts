@@ -9,11 +9,14 @@
 
 import {
   handleAccountIdentification,
+  handleEmailVerification,
   handleNewOAuthUserUpdate,
   handleOAuthCallback,
+  handleResendVerification,
   handleUserLogin,
   handleUserLogout,
   renderAuthChallenge,
+  renderEmailVerification,
   renderLogin,
   renderNewOAuthUser,
 } from '#handlers/auth'
@@ -34,6 +37,16 @@ router.on('/').renderInertia('home').use([middleware.auth()]).as('home')
 // AUTH ROUTES
 
 router.post('/auth/logout', handleUserLogout).as('logout').use([middleware.auth()])
+
+// Email verification routes (requires authenticated but unverified user)
+router
+  .group(() => {
+    router.get('/verify-email', renderEmailVerification).as('auth.verify-email')
+    router.post('/verify-email', handleEmailVerification)
+    router.post('/resend-verification', handleResendVerification)
+  })
+  .prefix('/auth')
+  .use([middleware.emailVerification()])
 
 router.get('/oauth/:provider/callback', handleOAuthCallback).as('oauth').use([middleware.guest()])
 

@@ -82,7 +82,6 @@ export const handleUserLogin = async (ctx: HttpContext) => {
 
   if (result.success) {
     await ctx.auth.use('web').login(result.user)
-
     return ctx.response.redirect().toRoute('home')
   }
 
@@ -159,4 +158,91 @@ export const handleNewOAuthUserUpdate = async (ctx: HttpContext) => {
   }
 
   return ctx.response.redirect().toRoute(result.redirectTo)
+}
+
+/**
+ * Renders the email verification page
+ * @param ctx - The HTTP request context
+ * @returns An Inertia response to render the email verification page
+ */
+export const renderEmailVerification = async (ctx: HttpContext) => {
+  const user = ctx.auth.user!
+
+  // Find existing verification or create new one
+  const result = await Actions.auth.findOrCreateEmailVerification.handle({ userId: user.id })
+
+  if (!result.success) {
+    return ctx.inertia.render('auth/verify-email', {
+      email: user.email,
+      attemptsRemaining: 0,
+      waitTimeSeconds: 0,
+      resendCount: 0,
+      error: 'Failed to generate verification code. Please try again.',
+    })
+  }
+
+  const verification = result.verification
+
+  // Calculate resend cooldown using utility function
+  const timing = Actions.auth.resendEmailVerification.calculateResendTiming(verification)
+
+  return ctx.inertia.render('auth/verify-email', {
+    email: user.email,
+    attemptsRemaining: verification.maxAttempts - verification.attempts,
+    waitTimeSeconds: timing.waitTimeSeconds,
+    resendCount: verification.resendCount,
+  })
+}
+
+/**
+ * Handles email verification with OTP
+ * @param ctx - The HTTP request context
+ * @returns An HTTP response for OTP verification
+ */
+export const handleEmailVerification = async (ctx: HttpContext) => {
+  const { otpCode } = ctx.request.only(['otpCode'])
+  const user = ctx.auth.user
+
+  if (!user) {
+    return ctx.response.redirect().toRoute('auth.login')
+  }
+
+  const result = await Actions.auth.verifyEmailOtp.handle({
+    userId: user.id,
+    otpCode,
+  })
+
+  if (result.success) {
+    ctx.session.flash('success', 'Email verified! Welcome to the platform.')
+    return ctx.response.redirect().toRoute('home')
+  }
+
+  if (result.errors) {
+    ctx.session.flash('errorsBag', result.errors)
+  }
+
+  return ctx.response.redirect().back()
+}
+
+/**
+ * Handles resending verification OTP
+ * @param ctx - The HTTP request context
+ * @returns An HTTP response for resending OTP
+ */
+export const handleResendVerification = async (ctx: HttpContext) => {
+  const user = ctx.auth.user
+
+  if (!user) {
+    return ctx.response.redirect().toRoute('auth.login')
+  }
+
+  const result = await Actions.auth.resendEmailVerification.handle({ userId: user.id })
+
+  if (result.success && result.message) {
+    ctx.session.flash('success', result.message)
+  } else if (result.errors) {
+    ctx.session.flash('errorsBag', result.errors)
+  }
+
+  return ctx.response.redirect().back()
 }

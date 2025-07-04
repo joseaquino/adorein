@@ -19,7 +19,12 @@ export default class AuthMiddleware {
       guards?: (keyof Authenticators)[]
     } = {}
   ) {
-    await ctx.auth.authenticateUsing(options.guards, { loginRoute: this.redirectTo })
+    const user = await ctx.auth.authenticateUsing(options.guards, { loginRoute: this.redirectTo })
+
+    if (user.verificationSource === 'email' && !user.emailVerifiedAt) {
+      return ctx.response.redirect().toRoute('auth.verify-email')
+    }
+
     return next()
   }
 }

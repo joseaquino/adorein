@@ -12,125 +12,130 @@ type ActionResponse =
   | { success: false; redirectTo: string; flash?: { message: string; type: 'error' | 'success' } }
 
 export async function handle(): Promise<ActionResponse> {
-    const { ally, params, auth, session } = HttpContext.getOrFail()
+  const { ally, params, auth, session } = HttpContext.getOrFail()
 
-    const providers = Object.keys(ally.config) as Array<keyof SocialProviders>
-    const targetProvider = providers.find((provider) => provider === params.provider)
+  const providers = Object.keys(ally.config) as Array<keyof SocialProviders>
+  const targetProvider = providers.find((provider) => provider === params.provider)
 
-    if (!targetProvider) {
-      return {
-        success: false,
-        redirectTo: 'auth.register',
-        flash: { type: 'error', message: `Invalid OAuth provider: ${params.provider}` },
-      }
+  if (!targetProvider) {
+    return {
+      success: false,
+      redirectTo: 'auth.register',
+      flash: { type: 'error', message: `Invalid OAuth provider: ${params.provider}` },
     }
+  }
 
-    const providerInstance = ally.use(targetProvider)
+  const providerInstance = ally.use(targetProvider)
 
-    if (providerInstance.hasError()) {
-      return {
-        success: false,
-        redirectTo: 'auth.register',
-        flash: { type: 'error', message: providerInstance.getError()! },
-      }
-    }
-
-    const providerUser = await providerInstance.user()
-
-    try {
-      await vine.validate({ schema: emailValidator, data: { email: providerUser.email } })
-    } catch (error) {
-      return {
-        success: false,
-        redirectTo: 'auth.register',
-        flash: { type: 'error', message: 'Invalid email from OAuth provider.' },
-      }
-    }
-
-    const userOAuth = await db.query.userThirdPartyAuths.findFirst({
-      where: and(
-        eq(userThirdPartyAuths.provider, params.provider),
-        eq(userThirdPartyAuths.providerId, providerUser.id)
-      ),
-      with: {
-        user: true,
+  if (providerInstance.hasError()) {
+    return {
+      success: false,
+      redirectTo: 'auth.register',
+      flash: {
+        type: 'error',
+        message: providerInstance.getError() || 'OAuth provider presented an error',
       },
-    })
-
-    if (userOAuth?.user) {
-      await auth.use('web').login(userOAuth.user)
-      return { success: true, user: userOAuth.user, redirectTo: 'home' }
     }
+  }
 
-    return db.transaction(async (tx) => {
-      let currentOAuth = userOAuth
-      if (!currentOAuth) {
-        const [created] = await tx
-          .insert(userThirdPartyAuths)
-          .values({
-            provider: params.provider,
-            providerId: providerUser.id,
-            payload: JSON.stringify(providerUser),
-          })
-          .returning()
+  const providerUser = await providerInstance.user()
 
-        currentOAuth = await tx.query.userThirdPartyAuths.findFirst({
-          where: eq(userThirdPartyAuths.id, created.id),
-          with: { user: true },
-        })
+  try {
+    await vine.validate({ schema: emailValidator, data: { email: providerUser.email } })
+  } catch (error) {
+    return {
+      success: false,
+      redirectTo: 'auth.register',
+      flash: { type: 'error', message: 'Invalid email from OAuth provider.' },
+    }
+  }
 
-        if (!currentOAuth) {
-          tx.rollback()
-          return {
-            success: false,
-            redirectTo: 'auth.register',
-            flash: { type: 'error', message: 'Failed to create OAuth user.' },
-          }
-        }
-      } else {
-        await tx
-          .update(userThirdPartyAuths)
-          .set({ payload: JSON.stringify(providerUser) })
-          .where(eq(userThirdPartyAuths.id, currentOAuth.id))
-      }
+  const userOAuth = await db.query.userThirdPartyAuths.findFirst({
+    where: and(
+      eq(userThirdPartyAuths.provider, params.provider),
+      eq(userThirdPartyAuths.providerId, providerUser.id)
+    ),
+    with: {
+      user: true,
+    },
+  })
 
-      const newAccountData = session.pull('isNewAccount', false)
-      const existingUser = await tx.query.users.findFirst({
-        where: eq(users.email, providerUser.email),
-      })
+  if (userOAuth?.user) {
+    await auth.use('web').login(userOAuth.user)
+    return { success: true, user: userOAuth.user, redirectTo: 'home' }
+  }
 
-      if (newAccountData && existingUser) {
-        session.put('existingAccount', {
-          providerId: currentOAuth.id,
-          userId: existingUser.id,
-        })
-        return { success: false, redirectTo: 'auth.register' }
-      }
-
-      const [firstName = '', ...lastNameParts] = providerUser.name.split(' ').filter(Boolean)
-      const lastName = lastNameParts.join(' ')
-
-      const [newUser] = await tx
-        .insert(users)
+  return db.transaction(async (tx) => {
+    let currentOAuth = userOAuth
+    if (!currentOAuth) {
+      const [created] = await tx
+        .insert(userThirdPartyAuths)
         .values({
-          email: providerUser.email,
-          firstName,
-          lastName,
+          provider: params.provider,
+          providerId: providerUser.id,
+          payload: JSON.stringify(providerUser),
         })
         .returning()
 
+      currentOAuth = await tx.query.userThirdPartyAuths.findFirst({
+        where: eq(userThirdPartyAuths.id, created.id),
+        with: { user: true },
+      })
+
+      if (!currentOAuth) {
+        tx.rollback()
+        return {
+          success: false,
+          redirectTo: 'auth.register',
+          flash: { type: 'error', message: 'Failed to create OAuth user.' },
+        }
+      }
+    } else {
       await tx
         .update(userThirdPartyAuths)
-        .set({ userId: newUser.id })
+        .set({ payload: JSON.stringify(providerUser) })
         .where(eq(userThirdPartyAuths.id, currentOAuth.id))
+    }
 
-      await auth.use('web').login(newUser)
-
-      return {
-        success: true,
-        user: newUser,
-        redirectTo: 'new-oauth-user',
-        providerId: currentOAuth.id,
-      }
+    const newAccountData = session.pull('isNewAccount', false)
+    const existingUser = await tx.query.users.findFirst({
+      where: eq(users.email, providerUser.email),
     })
+
+    if (newAccountData && existingUser) {
+      session.put('existingAccount', {
+        providerId: currentOAuth.id,
+        userId: existingUser.id,
+      })
+      return { success: false, redirectTo: 'auth.register' }
+    }
+
+    const [firstName = '', ...lastNameParts] = providerUser.name.split(' ').filter(Boolean)
+    const lastName = lastNameParts.join(' ')
+
+    const [newUser] = await tx
+      .insert(users)
+      .values({
+        email: providerUser.email,
+        firstName,
+        lastName,
+        emailVerifiedAt: new Date(), // OAuth providers verify emails
+        verificationSource: 'oauth',
+      })
+      .returning()
+
+    await tx
+      .update(userThirdPartyAuths)
+      .set({ userId: newUser.id })
+      .where(eq(userThirdPartyAuths.id, currentOAuth.id))
+
+    await auth.use('web').login(newUser)
+
+    return {
+      success: true,
+      user: newUser,
+      redirectTo: 'new-oauth-user',
+      providerId: currentOAuth.id,
+    }
+  })
 }

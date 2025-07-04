@@ -1,5 +1,5 @@
-import * as RegisterUser from '#actions/auth/register_user'
 import * as RegisterUserWithSocialProvider from '#actions/auth/register_user_with_social_provider'
+import Actions from '#actions/index'
 import { checkForExistingUser } from '#services/user_session_service'
 import { newAccountValidator } from '#validators/account_validator'
 import { SocialProviders } from '@adonisjs/ally/types'
@@ -33,14 +33,18 @@ export const renderRegistrationForm = async (ctx: HttpContext) => {
  * @returns A promise that resolves when the user has been created
  */
 export const registerNewUser = async (ctx: HttpContext) => {
-  const { request, response, session } = ctx
+  const { request, response, session, auth } = ctx
   const data = await request.validateUsing(newAccountValidator)
 
   try {
-    await RegisterUser.handle({ data })
-    return response.redirect().toRoute('home')
+    // Create unverified user account
+    const user = await Actions.auth.registerUser.handle({ data })
+    await auth.use('web').login(user)
+
+    return response.redirect().toRoute('auth.verify-email')
   } catch (error) {
     session.flash('error', error.message || 'An unexpected error occurred.')
+
     return response.redirect().back()
   }
 }
