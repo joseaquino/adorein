@@ -32,13 +32,17 @@ router.on('/docs').renderInertia('docs')
 
 // HOME ROUTES
 
-router.on('/').renderInertia('home').use([middleware.auth()]).as('home')
+router
+  .on('/')
+  .renderInertia('home')
+  .use([middleware.auth(), middleware.emailVerification()])
+  .as('home')
 
 // AUTH ROUTES
 
-router.post('/auth/logout', handleUserLogout).as('logout').use([middleware.auth()])
+router.post('/auth/logout', handleUserLogout).as('logout')
 
-// Email verification routes (requires authenticated but unverified user)
+// Email verification routes (requires authenticated user, verified or not)
 router
   .group(() => {
     router.get('/verify-email', renderEmailVerification).as('auth.verify-email')
@@ -46,7 +50,7 @@ router
     router.post('/resend-verification', handleResendVerification)
   })
   .prefix('/auth')
-  .use([middleware.emailVerification()])
+  .use([middleware.auth()])
 
 router.get('/oauth/:provider/callback', handleOAuthCallback).as('oauth').use([middleware.guest()])
 

@@ -2,6 +2,7 @@ import { db } from '#database/db'
 import { users } from '#database/schema/users'
 import { newAccountValidator } from '#validators/account_validator'
 import { HttpContext } from '@adonisjs/core/http'
+import hash from '@adonisjs/core/services/hash'
 import type { Infer } from '@vinejs/vine/types'
 
 type Params = {
@@ -11,11 +12,17 @@ type Params = {
 export async function handle({ data }: Params) {
   const { session } = HttpContext.getOrFail()
   try {
+    // Hash the password before storing
+    const hashedPassword = await hash.make(data.password)
+
     // Create unverified user account
     const [user] = await db
       .insert(users)
       .values({
-        ...data,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: hashedPassword,
         emailVerifiedAt: null, // Explicitly unverified
         verificationSource: 'email',
       })

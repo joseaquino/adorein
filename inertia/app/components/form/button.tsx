@@ -8,6 +8,7 @@ interface ButtonProps {
   fullWidth?: boolean
   className?: string
   size?: 'sm' | 'md' | 'lg'
+  disabled?: boolean
 }
 
 export default function Button(props: PropsWithChildren<ButtonProps>) {
@@ -19,6 +20,7 @@ export default function Button(props: PropsWithChildren<ButtonProps>) {
     fullWidth = false,
     className = '',
     size = 'md',
+    disabled = false,
   } = props
 
   const variantClasses = [className]
@@ -53,8 +55,17 @@ export default function Button(props: PropsWithChildren<ButtonProps>) {
     variantClasses.push('w-full')
   }
 
+  if (disabled) {
+    variantClasses.push('opacity-50 cursor-not-allowed')
+  }
+
   return (
-    <button className={variantClasses.join(' ')} type={type} onClick={onClick}>
+    <button 
+      className={variantClasses.join(' ')} 
+      type={type} 
+      onClick={onClick}
+      disabled={disabled}
+    >
       {children}
     </button>
   )

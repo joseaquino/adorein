@@ -1,4 +1,5 @@
 import Actions from '#actions/index'
+import { emailVerificationValidator } from '#validators/auth_validator'
 import { SocialProviders } from '@adonisjs/ally/types'
 import { HttpContext } from '@adonisjs/core/http'
 
@@ -100,7 +101,13 @@ export const handleUserLogin = async (ctx: HttpContext) => {
  * @returns An HTTP response that redirects the user to the login page
  */
 export const handleUserLogout = async (ctx: HttpContext) => {
-  await Actions.auth.logoutUser.handle()
+  // Check if user is authenticated before attempting logout
+  if (ctx.auth.user) {
+    await Actions.auth.logoutUser.handle()
+  }
+
+  // Clear any session data that might interfere
+  ctx.session.clear()
 
   return ctx.response.redirect().toRoute('auth.login')
 }
@@ -168,6 +175,11 @@ export const handleNewOAuthUserUpdate = async (ctx: HttpContext) => {
 export const renderEmailVerification = async (ctx: HttpContext) => {
   const user = ctx.auth.user!
 
+  // Redirect to home if user is already verified
+  if (user.emailVerifiedAt) {
+    return ctx.response.redirect().toRoute('home')
+  }
+
   // Find existing verification or create new one
   const result = await Actions.auth.findOrCreateEmailVerification.handle({ userId: user.id })
 
@@ -183,7 +195,7 @@ export const renderEmailVerification = async (ctx: HttpContext) => {
 
   const verification = result.verification
 
-  // Calculate resend cooldown using utility function
+  // Calculate resend timing (handles expiration internally)
   const timing = Actions.auth.resendEmailVerification.calculateResendTiming(verification)
 
   return ctx.inertia.render('auth/verify-email', {
@@ -191,6 +203,7 @@ export const renderEmailVerification = async (ctx: HttpContext) => {
     attemptsRemaining: verification.maxAttempts - verification.attempts,
     waitTimeSeconds: timing.waitTimeSeconds,
     resendCount: verification.resendCount,
+    expiresAt: verification.expiresAt.toISOString(),
   })
 }
 
@@ -200,12 +213,19 @@ export const renderEmailVerification = async (ctx: HttpContext) => {
  * @returns An HTTP response for OTP verification
  */
 export const handleEmailVerification = async (ctx: HttpContext) => {
-  const { otpCode } = ctx.request.only(['otpCode'])
   const user = ctx.auth.user
 
   if (!user) {
     return ctx.response.redirect().toRoute('auth.login')
   }
+
+  // Redirect to home if user is already verified
+  if (user.emailVerifiedAt) {
+    return ctx.response.redirect().toRoute('home')
+  }
+
+  // Validate OTP code format
+  const { otpCode } = await ctx.request.validateUsing(emailVerificationValidator)
 
   const result = await Actions.auth.verifyEmailOtp.handle({
     userId: user.id,
@@ -234,6 +254,11 @@ export const handleResendVerification = async (ctx: HttpContext) => {
 
   if (!user) {
     return ctx.response.redirect().toRoute('auth.login')
+  }
+
+  // Redirect to home if user is already verified
+  if (user.emailVerifiedAt) {
+    return ctx.response.redirect().toRoute('home')
   }
 
   const result = await Actions.auth.resendEmailVerification.handle({ userId: user.id })

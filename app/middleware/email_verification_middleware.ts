@@ -3,14 +3,16 @@ import type { NextFn } from '@adonisjs/core/types/http'
 
 export default class EmailVerificationMiddleware {
   async handle(ctx: HttpContext, next: NextFn) {
-    // Only allow access if user is logged in but not verified
-    if (!ctx.auth.user) {
+    const user = ctx.auth.user
+
+    // User should be authenticated by this point (auth middleware runs first)
+    if (!user) {
       return ctx.response.redirect().toRoute('auth.login')
     }
 
-    // If already verified, redirect to home
-    if (ctx.auth.user.emailVerifiedAt) {
-      return ctx.response.redirect().toRoute('home')
+    // If user needs email verification, redirect to verification page
+    if (user.verificationSource === 'email' && !user.emailVerifiedAt) {
+      return ctx.response.redirect().toRoute('auth.verify-email')
     }
 
     return next()

@@ -10,6 +10,14 @@ type Params = {
 type VerificationRecord = {
   resendCount: number
   lastSentAt: Date
+  expiresAt: Date
+}
+
+export type ResendTiming = {
+  backoffSeconds: number
+  canResendAt: Date
+  waitTimeSeconds: number
+  canResend: boolean
 }
 
 /**
@@ -23,14 +31,28 @@ type VerificationRecord = {
  * - 5th resend: 8 minutes
  * - 6th+ resend: 10 minutes (max)
  *
- * @param verification - Verification record with resendCount and lastSentAt
+ * If the OTP is expired, returns reset timing (immediate resend available)
+ *
+ * @param verification - Verification record with resendCount, lastSentAt, and expiresAt
  * @returns Object with timing calculations and resend availability
  */
-export function calculateResendTiming(verification: VerificationRecord) {
+export function calculateResendTiming(verification: VerificationRecord): ResendTiming {
+  const now = new Date()
+
+  // If OTP is expired, reset timing (allow immediate resend)
+  const isExpired = verification.expiresAt <= now
+  if (isExpired) {
+    return {
+      backoffSeconds: 0,
+      canResendAt: now,
+      waitTimeSeconds: 0,
+      canResend: true,
+    }
+  }
+
   // Calculate backoff time (exponential: 30s, 1m, 2m, 4m, 8m, max 10m)
   const backoffSeconds = Math.min(30 * Math.pow(2, verification.resendCount), 600)
   const canResendAt = new Date(verification.lastSentAt.getTime() + backoffSeconds * 1000)
-  const now = new Date()
   const waitTimeSeconds =
     now < canResendAt ? Math.ceil((canResendAt.getTime() - now.getTime()) / 1000) : 0
 
@@ -52,7 +74,27 @@ export async function handle({ userId }: Params) {
     return { success: false, errors: { general: 'No pending verification found' } }
   }
 
-  // Calculate resend timing using utility function
+  // Check if the current OTP is expired
+  const isExpired = verification.expiresAt <= new Date()
+
+  // If expired, reset everything (don't preserve resend count, don't check timing)
+  if (isExpired) {
+    const result = await generateEmailVerificationOtp.handle({
+      userId,
+      preserveResendCount: false, // Reset resend count for expired OTPs
+    })
+
+    if (!result.success) {
+      return { success: false, errors: { general: 'Failed to generate new verification code' } }
+    }
+
+    // TBD: Send new OTP email
+    // await EmailService.sendOTPVerification(user.email, result.otpCode)
+
+    return { success: true, message: 'New verification code sent', otpCode: result.otpCode }
+  }
+
+  // For non-expired OTPs, use normal resend logic with timing checks
   const timing = calculateResendTiming(verification)
 
   if (!timing.canResend) {

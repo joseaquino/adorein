@@ -1,6 +1,6 @@
 import { db } from '#database/db'
 import { userEmailVerifications, users } from '#database/schema'
-import { and, eq, gt } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 
 type Params = {
   userId: string
@@ -8,16 +8,24 @@ type Params = {
 }
 
 export async function handle({ userId, otpCode }: Params) {
-  // Find active verification record
+  // Single database call to get the verification record
   const verification = await db.query.userEmailVerifications.findFirst({
-    where: and(
-      eq(userEmailVerifications.userId, userId),
-      gt(userEmailVerifications.expiresAt, new Date())
-    ),
+    where: eq(userEmailVerifications.userId, userId),
   })
 
+  // If no record exists at all
   if (!verification) {
-    return { success: false, errors: { otp: 'Verification code expired or not found' } }
+    return { success: false, errors: { otp: 'Verification code not found' } }
+  }
+
+  // Check if the record is expired
+  const isExpired = verification.expiresAt <= new Date()
+  if (isExpired) {
+    return {
+      success: false,
+      errors: { otp: 'Verification code has expired' },
+      isExpired: true,
+    }
   }
 
   // Check max attempts

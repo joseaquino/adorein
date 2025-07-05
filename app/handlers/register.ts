@@ -41,7 +41,8 @@ export const registerNewUser = async (ctx: HttpContext) => {
     const user = await Actions.auth.registerUser.handle({ data })
     await auth.use('web').login(user)
 
-    return response.redirect().toRoute('auth.verify-email')
+    // Redirect to home - auth middleware will handle verification redirect
+    return response.redirect().toRoute('home')
   } catch (error) {
     session.flash('error', error.message || 'An unexpected error occurred.')
 
