@@ -1,8 +1,9 @@
 import { relations } from 'drizzle-orm'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { randomUUID } from 'node:crypto'
-import { userEmailVerifications } from './user_email_verifications.ts'
-import { userThirdPartyAuths } from './user_third_party_auths.ts'
+import { userEmailVerifications, type UserEmailVerification } from './user_email_verifications.ts'
+import { userThirdPartyAuths, type UserThirdPartyAuth } from './user_third_party_auths.ts'
+import { type SchemaWith } from './types.ts'
 
 export const users = sqliteTable(
   'users',
@@ -33,3 +34,22 @@ export const usersRelations = relations(users, ({ many }) => ({
 
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
+
+// Define available relations for this table - this provides autocompletion
+type UserRelations = {
+  thirdPartyAuths: UserThirdPartyAuth[]
+  emailVerifications: UserEmailVerification[]
+  // Add other relations here as they're defined
+}
+
+/**
+ * Generic utility type for including relations with a user
+ *
+ * Usage examples:
+ * - UserWith<'emailVerifications'> - includes email verifications
+ * - UserWith<'thirdPartyAuths'> - includes third party auths
+ * - UserWith<'emailVerifications' | 'thirdPartyAuths'> - includes multiple relations
+ *
+ * TypeScript will autocomplete available relation keys and ensure type safety
+ */
+export type UserWith<T extends keyof UserRelations> = SchemaWith<User, UserRelations, T>

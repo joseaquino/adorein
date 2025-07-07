@@ -34,4 +34,13 @@ export default await Env.create(new URL('../', import.meta.url), {
   GITHUB_CLIENT_SECRET: Env.schema.string(),
   GOOGLE_CLIENT_ID: Env.schema.string(),
   GOOGLE_CLIENT_SECRET: Env.schema.string(),
+
+  /*
+  |----------------------------------------------------------
+  | Variables for configuring the mail package
+  |----------------------------------------------------------
+  */
+  RESEND_API_KEY: Env.schema.string(),
+  RESEND_FROM_EMAIL: Env.schema.string.optional(),
+  RESEND_FROM_NAME: Env.schema.string.optional(),
 })

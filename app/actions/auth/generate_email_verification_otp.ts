@@ -1,5 +1,7 @@
 import { db } from '#database/db'
-import { userEmailVerifications } from '#database/schema'
+import { UserEmailVerification, userEmailVerifications } from '#database/schema'
+import VerifyEmailNotification from '#mails/verify_email_notification'
+import mail from '@adonisjs/mail/services/main'
 import { eq } from 'drizzle-orm'
 
 type Params = {
@@ -7,7 +9,23 @@ type Params = {
   preserveResendCount?: boolean
 }
 
-export async function handle({ userId, preserveResendCount = false }: Params) {
+interface FailureResult {
+  success: false
+  errors: {
+    general: string
+  }
+}
+
+interface SuccessResult {
+  success: true
+  verification: UserEmailVerification
+  emailSent: boolean
+  emailError: string | undefined
+}
+
+type Result = FailureResult | SuccessResult
+
+export async function handle({ userId, preserveResendCount = false }: Params): Promise<Result> {
   // Generate 6-digit OTP
   const otpCode = Math.floor(100000 + Math.random() * 900000).toString()
 
@@ -38,7 +56,7 @@ export async function handle({ userId, preserveResendCount = false }: Params) {
     .returning()
 
   // If no record was updated, insert a new one
-  let verification
+  let verification: UserEmailVerification
   if (!updated) {
     const [inserted] = await db
       .insert(userEmailVerifications)
@@ -56,5 +74,37 @@ export async function handle({ userId, preserveResendCount = false }: Params) {
     verification = updated
   }
 
-  return { success: true, verification, otpCode }
+  // Fetch the email verification with user data for email delivery
+  const verificationWithUser = await db.query.userEmailVerifications.findFirst({
+    where: eq(userEmailVerifications.id, verification.id),
+    with: {
+      user: true,
+    },
+  })
+
+  if (!verificationWithUser) {
+    return { success: false, errors: { general: 'Email verification record not found' } }
+  }
+
+  // Send OTP verification email
+  let emailSent = false
+  let emailError: string | undefined
+
+  try {
+    const notification = new VerifyEmailNotification(verificationWithUser)
+    await mail.send(notification)
+    emailSent = true
+  } catch (error) {
+    // Note: We don't fail the entire operation if email fails
+    // The OTP is still valid and user can request resend
+    console.error('Failed to send OTP verification email:', error)
+    emailError = error instanceof Error ? error.message : 'Unknown email delivery error'
+  }
+
+  return {
+    success: true,
+    verification,
+    emailSent,
+    emailError,
+  }
 }

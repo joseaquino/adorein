@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { formatTime } from '~/app/utils/time'
+import { formatTime } from '@shared/utils/time'
 
 export interface UseTimerReturn {
   formattedTime: string

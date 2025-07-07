@@ -1,11 +1,11 @@
 import { useForm } from '@inertiajs/react'
+import { calculateTimeToExpiry } from '@shared/utils/time'
 import { useRef } from 'react'
 import Alert from '~/app/components/feedback/alert'
 import Button from '~/app/components/form/button'
 import OtpInput, { OtpInputRef } from '~/app/components/form/otp-input'
 import { useTimer } from '~/app/hooks/use_timer'
 import AuthLayout from '~/app/layouts/auth.layout'
-import { calculateTimeToExpiry } from '~/app/utils/time'
 
 interface VerifyEmailPageProps {
   email: string

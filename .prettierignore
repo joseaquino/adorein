@@ -1,0 +1,8 @@
+# Ignore auto-generated Drizzle migration files
+database/drizzle/meta/
+
+# Other common ignores
+node_modules/
+build/
+dist/
+*.log

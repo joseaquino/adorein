@@ -60,12 +60,7 @@ export default function Button(props: PropsWithChildren<ButtonProps>) {
   }
 
   return (
-    <button 
-      className={variantClasses.join(' ')} 
-      type={type} 
-      onClick={onClick}
-      disabled={disabled}
-    >
+    <button className={variantClasses.join(' ')} type={type} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   )

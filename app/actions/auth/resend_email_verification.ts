@@ -88,10 +88,13 @@ export async function handle({ userId }: Params) {
       return { success: false, errors: { general: 'Failed to generate new verification code' } }
     }
 
-    // TBD: Send new OTP email
-    // await EmailService.sendOTPVerification(user.email, result.otpCode)
-
-    return { success: true, message: 'New verification code sent', otpCode: result.otpCode }
+    // Email was already sent by generateEmailVerificationOtp action
+    return {
+      success: true,
+      message: 'New verification code sent',
+      otpCode: result.verification.otpCode,
+      emailSent: result.emailSent,
+    }
   }
 
   // For non-expired OTPs, use normal resend logic with timing checks
@@ -117,8 +120,11 @@ export async function handle({ userId }: Params) {
     return { success: false, errors: { general: 'Failed to generate new verification code' } }
   }
 
-  // TBD: Send new OTP email
-  // await EmailService.sendOTPVerification(user.email, result.otpCode)
-
-  return { success: true, message: 'New verification code sent', otpCode: result.otpCode }
+  // Email was already sent by generateEmailVerificationOtp action
+  return {
+    success: true,
+    message: 'New verification code sent',
+    otpCode: result.verification.otpCode,
+    emailSent: result.emailSent,
+  }
 }
