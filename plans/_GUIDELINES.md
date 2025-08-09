@@ -431,7 +431,7 @@ Plan 3: "High-Risk Activation" (Phase 3)
 
 #### Updating Completed Phases
 
-When a phase is completed, update the estimation section to reflect actual vs estimated changes:
+When a phase is completed, update the estimation section to reflect actual vs estimated changes. DO NOT update this section unless the user has specifically indicated that the phase is complete and has provided a Git Commit hash:
 
 ```markdown
 #### Phase 1: Database Schema (Estimated: 150 lines | Actual: 88 lines +65/-12) - COMPLETED
