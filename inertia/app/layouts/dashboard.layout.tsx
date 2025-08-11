@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react'
+import { Head, Link } from '@inertiajs/react'
 import { UserDropdown } from '../components/layout/UserDropdown'
 
 interface DashboardLayoutProps {
@@ -9,16 +9,19 @@ const DashboardLayout = ({ children, title }: React.PropsWithChildren<DashboardL
   return (
     <div className="bg-slate-100 h-screen">
       <Head title={title} />
-      <div className="w-full grid grid-rows-[auto_1fr]">
+      <div className="w-full h-full grid grid-rows-[auto_1fr]">
         <div className="bg-slate-200 border-b border-slate-300">
           <header className="flex justify-between py-2 px-3 w-full max-w-5xl mx-auto items-center">
-            <p className="text-xl font-bold text-indigo-700 uppercase font-mono tracking-wider">
+            <Link
+              href="/"
+              className="text-xl font-bold text-indigo-700 uppercase font-mono tracking-wider hover:text-indigo-800 transition-colors cursor-pointer"
+            >
               Adorein
-            </p>
+            </Link>
             <UserDropdown />
           </header>
         </div>
-        <div className="w-full max-w-5xl mx-auto">{children}</div>
+        <div className="w-full h-full max-w-5xl mx-auto">{children}</div>
       </div>
     </div>
   )

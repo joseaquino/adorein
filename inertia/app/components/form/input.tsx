@@ -1,12 +1,13 @@
 import React from 'react'
 
 interface InputProps {
-  label: string
+  label?: string
   name: string
   placeholder?: string
   type?: string
   value: any
   error?: string
+  helperText?: string
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
   className?: string
   maxLength?: number
@@ -23,6 +24,7 @@ export default function Input(props: InputProps) {
     placeholder,
     value,
     error,
+    helperText,
     onChange,
     className,
     maxLength,
@@ -38,25 +40,40 @@ export default function Input(props: InputProps) {
     ? `${baseClassName} ${disabledClassName} ${className}`
     : `${baseClassName} ${disabledClassName}`
 
+  const inputElement = (
+    <input
+      type={type}
+      name={name}
+      value={value}
+      placeholder={placeholder}
+      onChange={onChange}
+      id={name}
+      data-error={!!error}
+      className={finalClassName}
+      maxLength={maxLength}
+      autoComplete={autoComplete}
+      autoFocus={autoFocus}
+      disabled={disabled}
+    />
+  )
+
+  if (!label) {
+    return (
+      <div className="flex flex-col gap-1">
+        {inputElement}
+        {error && <p className="text-red-600 text-xs">{error}</p>}
+        {helperText && !error && <p className="text-slate-600 text-xs">{helperText}</p>}
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <label className="block text-sm font-bold text-indigo-950">{label}</label>
       <div className="flex flex-col gap-1">
-        <input
-          type={type}
-          name={name}
-          value={value}
-          placeholder={placeholder}
-          onChange={onChange}
-          id={name}
-          data-error={!!error}
-          className={finalClassName}
-          maxLength={maxLength}
-          autoComplete={autoComplete}
-          autoFocus={autoFocus}
-          disabled={disabled}
-        />
-        <p className="text-red-600 text-xs">{error}</p>
+        {inputElement}
+        {error && <p className="text-red-600 text-xs">{error}</p>}
+        {helperText && !error && <p className="text-slate-600 text-xs">{helperText}</p>}
       </div>
     </div>
   )

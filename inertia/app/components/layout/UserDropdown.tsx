@@ -9,6 +9,10 @@ export const UserDropdown = () => {
     router.post('/auth/logout')
   }
 
+  const handleProfileClick = () => {
+    router.get('/user/profile')
+  }
+
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger className="size-9 bg-slate-100 border-2 border-slate-300 rounded-full flex items-center justify-center">
@@ -38,16 +42,19 @@ export const UserDropdown = () => {
           </DropdownMenu.Label>
           <DropdownMenu.Separator className="h-px bg-slate-300" />
           <DropdownMenu.Group>
-            <DropdownMenu.Item className="p-2 flex gap-2 items-center text-sm">
+            <DropdownMenu.Item
+              className="p-2 flex gap-2 items-center text-sm cursor-pointer"
+              onSelect={handleProfileClick}
+            >
               <User size={16} />
               Profile
             </DropdownMenu.Item>
-            <DropdownMenu.Item className="p-2 flex gap-2 items-center text-sm">
+            <DropdownMenu.Item className="p-2 flex gap-2 items-center text-sm cursor-pointer">
               <Gear size={16} />
               Settings
             </DropdownMenu.Item>
             <DropdownMenu.Item
-              className="p-2 flex gap-2 items-center text-sm"
+              className="p-2 flex gap-2 items-center text-sm cursor-pointer"
               onSelect={handleLogout}
             >
               <SignOut size={16} />
@@ -55,12 +62,12 @@ export const UserDropdown = () => {
             </DropdownMenu.Item>
           </DropdownMenu.Group>
           <DropdownMenu.Separator className="h-px bg-slate-300" />
-          <DropdownMenu.Item className="p-2 flex gap-2 items-center text-sm">
+          <DropdownMenu.Item className="p-2 flex gap-2 items-center text-sm cursor-pointer">
             <PlusCircle size={16} />
             Add Account
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="h-px bg-slate-300" />
-          <DropdownMenu.Item className="p-2 flex gap-2 items-center text-sm text-red-700">
+          <DropdownMenu.Item className="p-2 flex gap-2 items-center text-sm text-red-700 cursor-pointer">
             <SignOut size={16} />
             Logout All Accounts
           </DropdownMenu.Item>

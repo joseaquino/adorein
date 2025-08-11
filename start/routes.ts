@@ -38,6 +38,12 @@ router
   .use([middleware.auth(), middleware.emailVerification()])
   .as('home')
 
+router
+  .on('/user/profile')
+  .renderInertia('profile')
+  .use([middleware.auth(), middleware.emailVerification()])
+  .as('user.profile')
+
 // AUTH ROUTES
 
 router.post('/auth/logout', handleUserLogout).as('logout')
