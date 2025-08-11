@@ -20,6 +20,7 @@ import {
   renderLogin,
   renderNewOAuthUser,
 } from '#handlers/auth'
+import { handleProfileUpdate } from '#handlers/profile'
 import {
   registerNewUser,
   registerNewUserWithSocialProvider,
@@ -38,11 +39,14 @@ router
   .use([middleware.auth(), middleware.emailVerification()])
   .as('home')
 
+// USER ROUTES
 router
-  .on('/user/profile')
-  .renderInertia('profile')
+  .group(() => {
+    router.get('/profile', ({ inertia }) => inertia.render('profile')).as('user.profile')
+    router.post('/profile', handleProfileUpdate).as('user.profile.update')
+  })
+  .prefix('/user')
   .use([middleware.auth(), middleware.emailVerification()])
-  .as('user.profile')
 
 // AUTH ROUTES
 

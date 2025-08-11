@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react'
+import { useForm, usePage } from '@inertiajs/react'
 import { Check, PencilSimple, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import Button from '~/app/components/form/button'
@@ -6,26 +6,21 @@ import EditableField from '~/app/components/form/EditableField'
 import DashboardLayout from '~/app/layouts/dashboard.layout'
 import UserLayout from '~/app/layouts/user.layout'
 
-interface PersonalInformationFormData {
-  firstName: string
-  lastName: string
-  email: string
-}
-
 const ProfilePage = () => {
   const { auth } = usePage().props
 
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState<PersonalInformationFormData>({
+  const [originalEmail] = useState(auth.user.email)
+
+  const { data, setData, post, processing, errors, reset } = useForm({
     firstName: auth.user.firstName,
     lastName: auth.user.lastName,
     email: auth.user.email,
   })
-  const [originalEmail] = useState(auth.user.email)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setData(name as keyof typeof data, value)
   }
 
   const handleEdit = () => {
@@ -33,21 +28,19 @@ const ProfilePage = () => {
   }
 
   const handleCancel = () => {
-    setFormData({
-      firstName: auth.user.firstName,
-      lastName: auth.user.lastName,
-      email: auth.user.email,
-    })
+    reset()
     setIsEditing(false)
   }
 
   const handleSave = () => {
-    // TODO: Implement save functionality
-    console.log('Saving:', formData)
-    setIsEditing(false)
+    post('/user/profile', {
+      onSuccess: () => {
+        setIsEditing(false)
+      },
+    })
   }
 
-  const emailChanged = formData.email !== originalEmail
+  const emailChanged = data.email !== originalEmail
 
   return (
     <div className={`bg-white border-y border-slate-200 ${isEditing ? 'pt-6' : 'py-6'}`}>
@@ -70,25 +63,29 @@ const ProfilePage = () => {
         <EditableField
           label="First Name"
           name="firstName"
-          value={formData.firstName}
+          value={data.firstName}
           isEditing={isEditing}
           onChange={handleInputChange}
+          error={errors.firstName}
+          alignStart={!!errors.firstName}
           autoFocus
         />
 
         <EditableField
           label="Last Name"
           name="lastName"
-          value={formData.lastName}
+          value={data.lastName}
           isEditing={isEditing}
           onChange={handleInputChange}
+          error={errors.lastName}
+          alignStart={!!errors.lastName}
         />
 
         <EditableField
           label="Email"
           name="email"
           type="email"
-          value={formData.email}
+          value={data.email}
           isEditing={isEditing}
           onChange={handleInputChange}
           displayClassName="text-sm text-slate-900 font-mono py-2"
@@ -97,6 +94,7 @@ const ProfilePage = () => {
               ? 'Changing your email address will require email verification. Your email will not be updated until the new email address has been verified.'
               : undefined
           }
+          error={errors.email}
           alignStart
         />
       </div>
@@ -116,10 +114,11 @@ const ProfilePage = () => {
             variant="contained"
             size="sm"
             onClick={handleSave}
+            disabled={processing}
             className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700"
           >
             <Check size={16} />
-            Save
+            {processing ? 'Saving...' : 'Save'}
           </Button>
         </div>
       )}

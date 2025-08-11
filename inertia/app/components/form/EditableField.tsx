@@ -21,6 +21,8 @@ interface EditableFieldProps {
   displayClassName?: string
   /** Optional helper text displayed below the input in edit mode */
   helperText?: string
+  /** Validation error message to display */
+  error?: string
   /** Whether to align items to start instead of center - useful for fields with helper text */
   alignStart?: boolean
 }
@@ -36,6 +38,7 @@ const EditableField = ({
   className = '',
   displayClassName = 'text-sm text-slate-900 py-2',
   helperText,
+  error,
   alignStart = false,
 }: EditableFieldProps) => {
   const containerClass = alignStart
@@ -59,6 +62,7 @@ const EditableField = ({
             autoFocus={autoFocus}
             className={className}
             helperText={helperText}
+            error={error}
           />
         ) : (
           <div className={displayClassName}>{value}</div>

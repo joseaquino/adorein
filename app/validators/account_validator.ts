@@ -61,3 +61,11 @@ export const newOAuthAccountValidator = vine.compile(
 export const emailValidator = vine.object({
   email: vine.string().trim().email(),
 })
+
+export const updateProfileValidator = vine.compile(
+  vine.object({
+    firstName: vine.string().trim().maxLength(255),
+    lastName: vine.string().trim().maxLength(255),
+    email: vine.string().trim().email().use(uniqueEmailExceptRule()),
+  })
+)
