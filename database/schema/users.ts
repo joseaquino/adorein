@@ -15,6 +15,9 @@ export const users = sqliteTable(
     lastName: text('last_name').notNull(),
     email: text('email').notNull().unique(),
     password: text('password'),
+    role: text('role', { enum: ['USER', 'ADMIN'] })
+      .notNull()
+      .default('USER'),
     emailVerifiedAt: integer('email_verified_at', { mode: 'timestamp' }),
     verificationSource: text('verification_source').default('email'),
     createdAt: integer('created_at', { mode: 'timestamp' })
