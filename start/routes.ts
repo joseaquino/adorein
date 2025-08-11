@@ -7,6 +7,7 @@
 |
 */
 
+import { handleAdminUsers } from '#handlers/admin'
 import {
   handleAccountIdentification,
   handleEmailVerification,
@@ -52,7 +53,7 @@ router
 router
   .group(() => {
     router.get('/', ({ inertia }) => inertia.render('admin/index')).as('admin.index')
-    router.get('/users', ({ inertia }) => inertia.render('admin/users')).as('admin.users')
+    router.get('/users', handleAdminUsers).as('admin.users')
   })
   .prefix('/admin')
   .use([middleware.auth(), middleware.emailVerification(), middleware.hasRole({ role: 'ADMIN' })])
