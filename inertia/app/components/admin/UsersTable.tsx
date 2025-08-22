@@ -1,5 +1,5 @@
-import { router } from '@inertiajs/react'
-import { CheckIcon, XIcon } from '@phosphor-icons/react'
+import { router, Link } from '@inertiajs/react'
+import { CheckIcon, PencilSimpleIcon, XIcon } from '@phosphor-icons/react'
 
 interface User {
   id: string
@@ -33,6 +33,7 @@ export const UsersTable = ({ users }: UsersTableProps) => {
   const handlePageChange = (page: number) => {
     router.get('/admin/users', { page }, { preserveState: true })
   }
+
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -72,6 +73,9 @@ export const UsersTable = ({ users }: UsersTableProps) => {
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                 Joined
               </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
@@ -83,9 +87,7 @@ export const UsersTable = ({ users }: UsersTableProps) => {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-slate-600 font-mono">
-                    {user.email}
-                  </div>
+                  <div className="text-sm text-slate-600 font-mono">{user.email}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex justify-center">
@@ -101,16 +103,27 @@ export const UsersTable = ({ users }: UsersTableProps) => {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    user.role === 'ADMIN' 
-                      ? 'bg-indigo-100 text-indigo-800' 
-                      : 'bg-slate-100 text-slate-800'
-                  }`}>
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      user.role === 'ADMIN'
+                        ? 'bg-indigo-100 text-indigo-800'
+                        : 'bg-slate-100 text-slate-800'
+                    }`}
+                  >
                     {user.role}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                   {formatDate(user.createdAt)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right">
+                  <Link
+                    href={`/admin/users/${user.id}/profile`}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-sm font-medium text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md transition-colors"
+                  >
+                    <PencilSimpleIcon size={16} />
+                    Edit
+                  </Link>
                 </td>
               </tr>
             ))}

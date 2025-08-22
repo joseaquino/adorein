@@ -7,7 +7,11 @@
 |
 */
 
-import { handleAdminUsers } from '#handlers/admin'
+import {
+  handleAdminUserProfile,
+  handleAdminUserProfileUpdate,
+  handleAdminUsers,
+} from '#handlers/admin'
 import {
   handleAccountIdentification,
   handleEmailVerification,
@@ -54,6 +58,8 @@ router
   .group(() => {
     router.get('/', ({ inertia }) => inertia.render('admin/index')).as('admin.index')
     router.get('/users', handleAdminUsers).as('admin.users')
+    router.get('/users/:id/profile', handleAdminUserProfile).as('admin.users.profile')
+    router.post('/users/:id/profile', handleAdminUserProfileUpdate).as('admin.users.profile.update')
   })
   .prefix('/admin')
   .use([middleware.auth(), middleware.emailVerification(), middleware.hasRole({ role: 'ADMIN' })])
