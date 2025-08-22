@@ -27,9 +27,7 @@ ProfilePage.layout = (page: React.ReactElement<ProfilePageProps>) => {
 
   return (
     <DashboardLayout title="Personal Information">
-      <UserLayout title="Personal Information" user={auth.user}>
-        {page}
-      </UserLayout>
+      <UserLayout user={auth.user}>{page}</UserLayout>
     </DashboardLayout>
   )
 }

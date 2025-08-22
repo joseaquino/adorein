@@ -19,8 +19,8 @@ const AdminUserProfilePage = (props: AdminUserProfilePageProps) => {
   const { user } = props
 
   return (
-    <ProfileContent 
-      user={user} 
+    <ProfileContent
+      user={user}
       isOwnProfile={false}
       updateUrl={`/admin/users/${user.id}/profile`}
     />
@@ -30,21 +30,17 @@ const AdminUserProfilePage = (props: AdminUserProfilePageProps) => {
 AdminUserProfilePage.layout = (page: React.ReactElement<AdminUserProfilePageProps>) => {
   const { user } = page.props
   const adminHeader = (
-    <AdminBreadcrumb 
+    <AdminBreadcrumb
       items={[
         { label: 'Users', href: '/admin/users' },
-        { label: `${user.firstName} ${user.lastName}` }
-      ]} 
+        { label: `${user.firstName} ${user.lastName}` },
+      ]}
     />
   )
 
   return (
     <DashboardLayout title={`Admin - ${user.firstName} ${user.lastName}`} header={adminHeader}>
-      <UserLayout 
-        title={`${user.firstName} ${user.lastName}`}
-        user={user}
-        isAdminView={true}
-      >
+      <UserLayout user={user} isAdminView={true}>
         {page}
       </UserLayout>
     </DashboardLayout>
