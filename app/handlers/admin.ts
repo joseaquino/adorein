@@ -65,6 +65,30 @@ export const handleAdminUserProfile = async ({ inertia, params, response }: Http
   })
 }
 
+export const handleAdminUserActivityMonitor = async ({
+  inertia,
+  params,
+  response,
+}: HttpContext) => {
+  const userId = params.id
+
+  if (!userId) {
+    return response.badRequest('A User ID is required')
+  }
+
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+  })
+
+  if (!user) {
+    return response.notFound('User not found')
+  }
+
+  return inertia.render('admin/users/activity-monitor', {
+    user: user,
+  })
+}
+
 export const handleAdminUserProfileUpdate = async ({
   request,
   response,

@@ -8,6 +8,7 @@
 */
 
 import {
+  handleAdminUserActivityMonitor,
   handleAdminUserProfile,
   handleAdminUserProfileUpdate,
   handleAdminUsers,
@@ -49,6 +50,9 @@ router
   .group(() => {
     router.get('/profile', ({ inertia }) => inertia.render('profile')).as('user.profile')
     router.post('/profile', handleProfileUpdate).as('user.profile.update')
+    router
+      .get('/activity-monitor', ({ inertia }) => inertia.render('user/activity-monitor'))
+      .as('user.activity-monitor')
   })
   .prefix('/user')
   .use([middleware.auth(), middleware.emailVerification()])
@@ -60,6 +64,9 @@ router
     router.get('/users', handleAdminUsers).as('admin.users')
     router.get('/users/:id/profile', handleAdminUserProfile).as('admin.users.profile')
     router.post('/users/:id/profile', handleAdminUserProfileUpdate).as('admin.users.profile.update')
+    router
+      .get('/users/:id/activity-monitor', handleAdminUserActivityMonitor)
+      .as('admin.users.activity-monitor')
   })
   .prefix('/admin')
   .use([middleware.auth(), middleware.emailVerification(), middleware.hasRole({ role: 'ADMIN' })])

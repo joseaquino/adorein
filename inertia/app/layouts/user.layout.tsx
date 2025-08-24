@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react'
-import { UserIcon } from '@phosphor-icons/react'
+import { Link, usePage } from '@inertiajs/react'
+import { UserIcon, PulseIcon } from '@phosphor-icons/react'
 
 interface UserLayoutProps {
   user: {
@@ -17,6 +17,10 @@ const UserLayout = ({
   user,
   isAdminView = false,
 }: React.PropsWithChildren<UserLayoutProps>) => {
+  const { url } = usePage()
+  
+  const isProfilePage = url.includes('/profile')
+  const isActivityMonitorPage = url.includes('/activity-monitor')
   return (
     <div className="flex flex-col gap-4 h-full py-4">
       {/* User Profile Section */}
@@ -57,18 +61,55 @@ const UserLayout = ({
           {/* Navigation */}
           <nav className="space-y-2">
             {isAdminView ? (
-              <div className="flex items-center px-4 py-3 gap-3 text-sm font-medium text-indigo-600 bg-indigo-100 border-r-4">
-                <UserIcon size={24} />
-                Profile Information
-              </div>
+              <>
+                <Link
+                  href={`/admin/users/${user.id}/profile`}
+                  className={`flex items-center px-4 py-3 gap-3 text-sm font-medium transition-colors cursor-pointer ${
+                    isProfilePage
+                      ? 'text-indigo-600 bg-indigo-100 border-r-4 border-indigo-600'
+                      : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                  }`}
+                >
+                  <UserIcon size={24} />
+                  Profile Information
+                </Link>
+                <Link
+                  href={`/admin/users/${user.id}/activity-monitor`}
+                  className={`flex items-center px-4 py-3 gap-3 text-sm font-medium transition-colors cursor-pointer ${
+                    isActivityMonitorPage
+                      ? 'text-indigo-600 bg-indigo-100 border-r-4 border-indigo-600'
+                      : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                  }`}
+                >
+                  <PulseIcon size={24} />
+                  Activity Monitor
+                </Link>
+              </>
             ) : (
-              <Link
-                href="/user/profile"
-                className="flex items-center px-4 py-3 gap-3 text-sm font-medium text-indigo-600 bg-indigo-100 border-r-4 hover:bg-indigo-200 transition-colors cursor-pointer"
-              >
-                <UserIcon size={24} />
-                Personal Information
-              </Link>
+              <>
+                <Link
+                  href="/user/profile"
+                  className={`flex items-center px-4 py-3 gap-3 text-sm font-medium transition-colors cursor-pointer ${
+                    isProfilePage
+                      ? 'text-indigo-600 bg-indigo-100 border-r-4 border-indigo-600'
+                      : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                  }`}
+                >
+                  <UserIcon size={24} />
+                  Personal Information
+                </Link>
+                <Link
+                  href="/user/activity-monitor"
+                  className={`flex items-center px-4 py-3 gap-3 text-sm font-medium transition-colors cursor-pointer ${
+                    isActivityMonitorPage
+                      ? 'text-indigo-600 bg-indigo-100 border-r-4 border-indigo-600'
+                      : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+                  }`}
+                >
+                  <PulseIcon size={24} />
+                  Activity Monitor
+                </Link>
+              </>
             )}
           </nav>
         </div>
